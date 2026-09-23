@@ -72,11 +72,6 @@ def apply_decision_policy(
     return PolicyResult(primary, True, False, False)
 
 
-def _scenario_label(scenario_id: str, catalog: ScenarioCatalog) -> str:
-    item = catalog.scenarios.get(scenario_id)
-    return item.get("name", scenario_id) if item else scenario_id
-
-
 def build_assistant_text(
     *,
     result: RouterOutput,
@@ -98,21 +93,8 @@ def build_assistant_text(
         )
 
     if policy.needs_clarification:
-        candidates = []
-        if policy.primary and policy.primary.scenario_id in catalog.scenarios:
-            candidates.append(policy.primary.scenario_id)
-        candidates.extend(
-            item.scenario_id
-            for item in result.alternatives
-            if item.scenario_id in catalog.scenarios
-        )
-        candidates = list(dict.fromkeys(candidates))[:2]
-        if len(candidates) == 2:
-            template = catalog.system_intents["SYS_UNCLEAR"]["response"][language]
-            return template.format(
-                option_a=_scenario_label(candidates[0], catalog),
-                option_b=_scenario_label(candidates[1], catalog),
-            )
+        if result.clarification_question:
+            return result.clarification_question
         return (
             "Уточните, пожалуйста, что именно вы хотите сделать со страховкой?"
             if language == "ru"
