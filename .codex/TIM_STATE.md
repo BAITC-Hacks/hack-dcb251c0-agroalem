@@ -5,7 +5,7 @@ Branch: `tim/backend`
 
 ## Current objective
 
-Verify the structured text-routing target in CI/live API, then produce the first official dev-set evaluation baseline.
+Get backend CI to execute, run a live 3-item OpenAI smoke, then produce the first official 104-utterance dev-set evaluation baseline.
 
 ## Last completed engineering work
 
@@ -53,7 +53,8 @@ POST /v1/turn/text
 - FastAPI `GET /health`;
 - FastAPI `POST /v1/turn/text`;
 - measured router/response/total timings;
-- tests for catalog, validation, router normalization, policy and API;
+- tests for catalog, validation, router normalization, policy, API and evaluation mapping;
+- official dev-set prediction runner (`python -m backend.scripts.generate_predictions`);
 - GitHub backend test workflow.
 
 ## Safety/trace decisions
@@ -91,7 +92,7 @@ Voice/STT/TTS transport remains UNKNOWN.
 
 ## Open blockers
 
-- CI result pending.
+- GitHub Actions PR job is being queued but prior run received no runner (`runner_id=0`, zero steps), so CI infrastructure may be restricted by the organizer repository settings.
 - Live LLM smoke/evaluation requires a valid server-side `OPENAI_API_KEY`.
 - Danil branch remains diverged from main; his Phase 0 work is visible in draft PR #2 and must not be overwritten.
 - Current session state is in-memory and not production durable.
@@ -119,10 +120,9 @@ Shared main advanced with backend CI workflow after the previous starter-kit syn
 
 ## Next exact target action
 
-1. Check PR #3 backend CI.
-2. Fix any failing tests until CI is green.
-3. Run one live `POST /v1/turn/text` smoke with server-side credentials.
-4. Add a dev-set prediction runner.
-5. Run official:
-   `python starter-kit/evaluate.py predictions.json starter-kit/dev_utterances.json`
-6. Record measured baseline/failure pairs in this file before tuning.
+1. Check PR #3 backend CI runner status.
+2. On Tim PC run `py -m pytest backend\\tests -q` if hosted Actions remains unavailable.
+3. With server-side credentials run `py -m backend.scripts.generate_predictions --limit 3 --output smoke_predictions.json`.
+4. If smoke is valid, run full `py -m backend.scripts.generate_predictions --output predictions.json`.
+5. Run official `py starter-kit\\evaluate.py predictions.json starter-kit\\dev_utterances.json`.
+6. Record exact model ID, commands, measured baseline and failure pairs here before tuning.
