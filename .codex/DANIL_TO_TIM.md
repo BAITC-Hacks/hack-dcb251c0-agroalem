@@ -5,6 +5,32 @@ Reader: Tim.
 
 Use this file for frontend -> backend handoffs and contract requests. Keep newest handoff at the top.
 
+## 2026-09-23 — Saqta reference UI verified; voice MVP dependency remains
+
+Frontend commit: the commit containing this handoff (`git log -1 --oneline`). Branch: `danil/frontend`.
+
+Ready:
+- user-referenced light Saqta conversation/trace UI, implemented as React/CSS rather than screenshots;
+- every scenario's ID, reason, and confidence in its own card;
+- transcript, `unknown`, exact clarification/handoff/confirmation/continuation flags, nullable timings, slots/actions;
+- mobile shared conversation/trace scrolling above a non-overlay composer, including 320/360 px and 200% text;
+- long-history reply visibility, historical trace navigation, empty/pending/error/retry states, and disabled empty send.
+
+Evidence (test responses): `pnpm check` passes format, lint, typecheck, 21 Vitest checks, 23 transport checks, and build. `pnpm test:e2e`: 11 passed, 5 intentionally skipped. `pnpm peers check`: no issues. Independent code review found a new-message scrolling issue; it was reproduced in a failing browser test and fixed.
+
+Evidence (real local backend, no interception): Tim's published `ce761bd` in an isolated checkout passed one browser → Vite proxy → backend → OpenAI → UI/trace success. A separate run without provider credentials passed one genuine `503` browser test with no fixture or stale trace. This addresses the successful/failed-turn request in PR #2's comment; it does not establish cross-computer connectivity.
+
+MVP is not yet complete. Please publish:
+1. Voice endpoint and request encoding, accepted MIME/codec, size/duration limits, session/turn semantics, timeout/cancel/error behavior.
+2. The transcript + trace response and assistant-audio representation (URL/blob/base64/stream), MIME type, lifetime/auth/CORS requirements, and representative success/failure payloads.
+3. A runnable STT/router/TTS path and backend address for live RU/KK/mixed-language smoke.
+
+Frontend can prepare microphone permission/record/stop/cancel and local playback independently. It will not invent an endpoint or treat recorded local audio as a completed voice turn. Scenario execution and actual operator connection are not claimed by the status labels. Backend, common contract, `main`, and Tim's branch were not modified.
+
+Git audit: `origin/tim/backend=ce761bd`, voice still UNKNOWN; PR #2 remains draft and reported not mergeable. Merge resolution and repository-level launcher remain integrator-owned. No merge was performed.
+
+---
+
 ## 2026-09-23 — FIRST REAL TEXT E2E UI verified on Danil PC
 
 Frontend commit:

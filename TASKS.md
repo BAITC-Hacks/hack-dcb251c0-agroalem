@@ -12,10 +12,10 @@
 - [ ] Implement scenario execution against official KB/mock backend.
 - [ ] Implement response generation.
 - [ ] Implement TTS/audio playback.
-- [ ] Implement text fallback.
-- [ ] Implement supervisor trace panel.
-- [ ] Show scenario + short rationale + alternatives after every turn.
-- [ ] Show real stage latency.
+- [x] Implement text fallback. (Danil: verified local browser-to-backend text path.)
+- [x] Implement supervisor trace panel. (Danil: per-turn text trace.)
+- [x] Show scenario + short rationale + alternatives after every turn. (Danil: each successful text response; failed turns show unavailable trace.)
+- [x] Show real stage latency. (Danil: published API values only; unavailable stages remain `—`.)
 - [ ] Verify Russian.
 - [ ] Verify Kazakh.
 - [ ] Verify mixed-language speech.
@@ -25,6 +25,8 @@
 - [ ] Replace all README setup placeholders with real commands.
 
 ## P1 — robustness and score
+
+- [x] Match Saqta frontend references and keep mobile trace reachable above the composer at 320/360 px and 200% text. (Owner: Danil; branch: `danil/frontend`; evidence: frontend Playwright checks.)
 
 - [ ] Add uncertainty gate.
 - [ ] Add clarification flow.

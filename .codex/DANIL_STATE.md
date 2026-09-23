@@ -10,11 +10,11 @@ Only Danil's agent should normally edit this file. Update it in every completed 
 
 ## Current objective
 
-Hand the verified `FIRST REAL TEXT E2E UI` milestone to Tim for integration review. Do not begin backend audio integration until Tim publishes the voice contract.
+Deliver the user-referenced Saqta text UI, keep it available for manual review with a real local backend, and close frontend MVP gaps without inventing the pending voice contract.
 
 ## Last completed goal
 
-Verified and hardened the real text UI on Danil's machine: installed locked dependencies, expanded contract/component/browser tests, fixed per-turn trace behavior, ran the real backend, and completed a browser-to-real-backend OpenAI routing smoke.
+Implemented the Saqta reference screens with per-scenario reason/confidence, explicit API states, transcript, and mobile non-overlay composer. Verified long-history scrolling, historical trace navigation, 320/360 px and 200% text, and genuine local backend success and missing-provider error paths.
 
 ## Verified frontend facts
 
@@ -30,7 +30,9 @@ Verified and hardened the real text UI on Danil's machine: installed locked depe
 - Trace renders transcript, `ru|kk|mixed|unknown`, all scenarios in backend order, confidence, reason, alternatives, slots, actions, continuation, clarification, handoff, confirmation requirement, and all published latency fields.
 - `null` latency renders as `—`; numeric latency is not recomputed.
 - `requires_confirmation` is labelled as a requirement and explicitly says that the action has not run.
-- Desktop and 360 px browser checks keep conversation and trace reachable without horizontal page overflow.
+- Desktop and 320/360 px browser checks keep conversation and trace reachable without horizontal page overflow, including 200% text at 320 px. The last latency row is fully visible above the composer.
+- Latest submitted replies remain visible as history grows; explicit history navigation disables automatic following. Selecting a historical trace reveals its heading and transcript.
+- Empty/whitespace input disables Send. Concept placeholders are not application data; images are not required for understanding the UI.
 - Provider credentials remain server-side; frontend configuration contains only the non-secret API base URL.
 
 ## Voice capture/playback status
@@ -46,7 +48,9 @@ Verified and hardened the real text UI on Danil's machine: installed locked depe
 - The earlier backend commit `2f20471` passed 17 tests. At current `ce761bd`, the full Windows run produced 63 passed and 1 failed: `test_atomic_write_creates_parent_and_preserves_unicode` read the UTF-8 JSON with the platform default encoding. This remains backend-owned.
 - Real health check returned `status=ok`, `business_scenarios=40`, and `system_intents=3`.
 - Direct real text smoke returned turn 1, language `ru`, scenario `SC11`, no clarification/handoff, real router latency about 5212.5 ms, and `null` STT/TTS timing.
-- Playwright verified the merged frontend → Vite proxy → Tim backend at `ce761bd` → OpenAI router → conversation + supervisor trace path: `1 passed`.
+- Playwright re-verified the current frontend → Vite proxy → Tim backend at `ce761bd` → OpenAI router → conversation + supervisor trace path: `1 passed`.
+- A separate run without provider credentials verified a genuine backend `503` through the browser: `1 passed`; no intercepted response, fixture fallback, or stale successful trace.
+- These are local checks on Danil's computer against an isolated checkout of Tim's code, not connectivity checks between the two computers.
 - Tim's full 104-utterance evaluation baseline remains backend-owned and is not claimed by frontend.
 
 ## Automated verification evidence
@@ -67,8 +71,9 @@ Current results:
 
 - Vitest unit/component/contract/regression tests: 21 passed;
 - dependency-free transport/trace-selection checks: 23 passed;
-- intercepted Playwright desktop + 360 px tests: 4 passed, with the opt-in live tests skipped by default;
-- live Playwright browser-to-backend smoke: 1 passed when `REAL_BACKEND=1`;
+- intercepted Playwright desktop + narrow tests: 11 passed; 5 skipped (four opt-in live cases and the desktop duplicate of the mobile geometry case);
+- live Playwright browser-to-backend success: 1 passed when `REAL_BACKEND=1`;
+- genuine backend missing-provider `503`: 1 passed when `REAL_BACKEND_FAILURE=1` (a separate isolated server run);
 - build: passed;
 - peer dependency check: no issues.
 
@@ -89,10 +94,12 @@ Current results:
 - Text STT and TTS-first-audio timings correctly remain unavailable.
 - The observed real router smoke was functionally correct but slower than the project latency target; optimization remains backend-owned and must be evidence-driven.
 - Repository-level one-command launch and final shared README integration remain Tim/integrator-owned.
+- Official hackathon voice MVP is not ready: microphone → STT → router → TTS → playback is required; text is supplementary. Standalone browser recording can be prepared without an endpoint, but is not voice E2E.
+- GitHub PR #2 is draft and reported not mergeable during the audit. No merge/conflict resolution was attempted from this branch. Tim's comment requesting real successful and failed browser turns is covered by the separate local checks above.
 
 ## Next exact target action
 
-Ask Tim to review/integrate the verified text milestone. After Tim publishes the voice request/response contract, implement browser microphone capture as a separate adapter-backed slice.
+Keep the text UI running for user review; hand Tim the verified UI and exact missing voice-contract requirements. Next independent frontend slice: browser recorder/local playback with permission/error/cleanup tests, clearly labelled local-only. Wire voice transport and assistant playback only after Tim publishes the endpoint, codec, request/response, errors, and audio representation.
 
 ## Do not forget
 

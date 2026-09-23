@@ -98,7 +98,7 @@ describe("trace ownership", () => {
       screen.getByRole("region", { name: "Supervisor trace" }),
     );
     expect(panel.queryByText("SC11")).not.toBeInTheDocument();
-    expect(panel.getByText("Ожидаем trace этой реплики")).toBeInTheDocument();
+    expect(panel.getByText("Ожидаем данные маршрутизации")).toBeInTheDocument();
   });
 
   it("cancels waiting without claiming server cancellation or successful routing", async () => {

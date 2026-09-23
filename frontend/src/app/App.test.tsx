@@ -36,7 +36,7 @@ describe("App", () => {
       screen.getByRole("button", { name: "Микрофон пока недоступен" }),
     ).toBeDisabled();
     expect(
-      screen.getByText("Ожидаем voice contract от backend."),
+      screen.getByText("Голосовой режим пока недоступен."),
     ).toBeInTheDocument();
 
     const input = screen.getByLabelText("Сообщение клиента");
@@ -53,7 +53,9 @@ describe("App", () => {
     expect(screen.getAllByText("Первый вопрос").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Второй вопрос").length).toBeGreaterThan(0);
     expect(
-      screen.getAllByRole("heading", { name: "Routing trace" }),
+      screen.getAllByRole("heading", {
+        name: "Supervisor trace · реплика 2",
+      }),
     ).toHaveLength(1);
     const tracePanel = within(
       screen.getByRole("region", { name: "Supervisor trace" }),
@@ -78,6 +80,20 @@ describe("App", () => {
 
     expect(await screen.findByText("SC11")).toBeInTheDocument();
     expect(screen.getByText("SC13")).toBeInTheDocument();
+    const firstScenario = within(
+      screen.getByRole("article", { name: "Сценарий SC11" }),
+    );
+    const secondScenario = within(
+      screen.getByRole("article", { name: "Сценарий SC13" }),
+    );
+    expect(firstScenario.getByText(/91\s*%/)).toBeInTheDocument();
+    expect(
+      firstScenario.getByText("Совпали признаки статуса заявки"),
+    ).toBeInTheDocument();
+    expect(secondScenario.getByText(/67\s*%/)).toBeInTheDocument();
+    expect(
+      secondScenario.getByText("Есть дополнительный вопрос"),
+    ).toBeInTheDocument();
     expect(screen.getByText("unknown")).toBeInTheDocument();
     expect(screen.getByText("policy_number")).toBeInTheDocument();
     expect(screen.getByText("P-42")).toBeInTheDocument();
@@ -125,9 +141,14 @@ describe("App", () => {
     await user.type(screen.getByLabelText("Сообщение клиента"), "Нужна помощь");
     await user.click(screen.getByRole("button", { name: "Отправить" }));
 
-    expect(await screen.findByText("Уточнение: да")).toBeInTheDocument();
-    expect(screen.getByText("Оператор: да")).toBeInTheDocument();
-    expect(screen.getByText("Передача оператору")).toBeInTheDocument();
+    const tracePanel = within(
+      screen.getByRole("region", { name: "Supervisor trace" }),
+    );
+    expect(await tracePanel.findByText("Уточнение")).toBeInTheDocument();
+    expect(tracePanel.getByText("Передача оператору")).toBeInTheDocument();
+    expect(tracePanel.getByText("Подтверждение")).toBeInTheDocument();
+    expect(tracePanel.getByText("Продолжение диалога")).toBeInTheDocument();
+    expect(tracePanel.getByText("Требуется оператор")).toBeInTheDocument();
   });
 
   it("locks duplicate submission while the turn is pending", async () => {
@@ -175,7 +196,7 @@ describe("App", () => {
       "Не удалось обработать запрос.",
     );
 
-    await user.click(screen.getByRole("button", { name: "Повторить" }));
+    await user.click(screen.getByRole("button", { name: "Попробовать снова" }));
     expect(await screen.findByText("Ответ 1")).toBeInTheDocument();
     expect(inputs).toHaveLength(2);
     expect(inputs[0]?.session_id).toBe(inputs[1]?.session_id);

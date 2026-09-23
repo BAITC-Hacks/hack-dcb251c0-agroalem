@@ -58,7 +58,7 @@ Run all static and unit/build checks:
 pnpm check
 ```
 
-Run browser tests with intercepted deterministic responses at desktop and 360 px:
+Run browser tests with intercepted deterministic responses at desktop, 360 px, 320 px, and 200% text:
 
 ```powershell
 pnpm test:e2e
@@ -71,7 +71,16 @@ $env:REAL_BACKEND="1"
 pnpm exec playwright test e2e/real-backend.spec.ts --project=desktop-chromium
 ```
 
-The live test is skipped by default so ordinary frontend checks never consume provider quota or require a secret.
+To test a genuine unavailable-provider error, use an isolated backend checkout without provider credentials or provider env files, stop any credentialed test server, and opt in separately:
+
+```powershell
+Remove-Item Env:REAL_BACKEND -ErrorAction SilentlyContinue
+$env:REAL_BACKEND_FAILURE="1"
+pnpm exec playwright test e2e/real-backend.spec.ts --project=desktop-chromium
+Remove-Item Env:REAL_BACKEND_FAILURE
+```
+
+Do not remove a developer's saved credential file to run this check. Both live tests are skipped by default, so ordinary frontend checks never consume provider quota or require a secret. `127.0.0.1:8000` refers to the computer running Vite; these checks do not prove connectivity to Tim's separate computer.
 
 ## Current milestone
 
@@ -85,6 +94,10 @@ Implemented and verified text-only E2E UI:
 - response-session validation and protection from late responses;
 - `unknown` language and nullable latency rendering;
 - explicit confirmation-required wording that does not claim an action ran;
-- responsive access to conversation and trace.
+- light Saqta Insurance reference layout with semantic message cards;
+- confidence and reason inside each scenario's own card;
+- explicit API-driven clarification, handoff, confirmation, and continuation state rows;
+- desktop side-by-side surfaces and mobile conversation/trace scrolling above a pinned, non-overlay composer;
+- empty/whitespace send lockout and large-text responsive layout.
 
 Voice remains deliberately out of scope until Tim publishes the audio transport and assistant-audio contract.
