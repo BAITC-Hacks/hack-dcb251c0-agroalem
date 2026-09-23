@@ -10,10 +10,10 @@ At the end of EVERY completed target action, update this file in the same commit
 `danil/frontend`
 
 ## Current objective
-Agree the Phase 1 frontend architecture and UX before scaffolding any application code.
+Obtain user review of the written frontend design spec, then create the file-level implementation plan before scaffolding.
 
 ## Last completed goal
-Verified the local provider credential setup and recorded the server-only boundary for OpenAI and NVIDIA secrets before frontend scaffolding.
+Selected the frontend architecture and UX, then recorded the conversation-approved direction in `docs/superpowers/specs/2026-09-23-frontend-voice-ux-design.md` for written-spec review.
 
 ## Verified facts about current frontend
 - `danil/frontend` was synchronized with `origin/danil/frontend` before the audit.
@@ -41,7 +41,7 @@ Verified the local provider credential setup and recorded the server-only bounda
 - Actual transport/endpoints: UNKNOWN pending Tim's backend audit and handoff.
 
 ## Open frontend blockers
-- Frontend stack, architecture, and customer/supervisor UX are not yet selected or designed.
+- The written design spec requires user review before implementation planning begins.
 - Backend transport/endpoints remain `UNKNOWN` until Tim's audit and handoff; Phase 1 must keep any fixture boundary isolated from transport assumptions.
 - Canonical frontend format, lint, type-check, build, and test commands do not exist yet.
 
@@ -59,20 +59,21 @@ Verified the local provider credential setup and recorded the server-only bounda
 - `TASKS.md` remains unchanged because the audit did not complete a product capability.
 - `OPENAI_API_KEY` and `NVIDIA_API_KEY` are server-only secrets. Frontend code must never read them or introduce public-prefixed aliases; browser voice UX sends audio through the agreed backend adapter and receives transcript/audio results.
 - NVIDIA STT/TTS provider calls belong to Tim's server-side adapters under the existing team split. Danil owns microphone capture, transport, playback, and related UI states only.
+- Use React, TypeScript, Vite, pnpm, and CSS Modules for the browser application.
+- Isolate UI from backend transport behind `TurnClient`, with a non-routing fixture adapter until Tim provides the real contract.
+- Use batch `MediaRecorder` capture for P0; streaming remains out of scope until the working flow is measured.
+- Add tests with each functional slice rather than postponing them to a final testing phase.
+- Do not assign implementation agents until the approved implementation plan exposes independent, non-overlapping tasks.
 
 ## Latest commands actually run
-- `git pull --rebase origin danil/frontend` reported `Already up to date`.
-- `rg --files --hidden -g '!.git/**' -g '!.env*'` found only documentation, coordination files, and starter-kit/source assets.
-- Targeted manifest/source/config search found no frontend application files.
-- Targeted implementation search found only scenario-related lines in `starter-kit/evaluate.py`, not browser application code.
-- Frontend build and tests were explicitly skipped because `package.json` and configured frontend scripts do not exist.
-- `node --version`, `npm --version`, and `pnpm --version` reported `v24.19.0`, `11.17.0`, and `11.19.0`.
-- Safe `.env.local` checks confirmed both server-only variable names without exposing values, confirmed removal of `.envNVIDIA.local`, and confirmed Git ignore coverage.
-- Repository-wide searches excluding `.env*` found no public-prefixed provider secrets, direct OpenAI/NVIDIA API calls, application manifests, or frontend/backend source trees.
-- Read-only `GET /v1/models` authentication checks returned HTTP 200 from both `api.openai.com` and `integrate.api.nvidia.com`.
+- `git pull --rebase origin danil/frontend` reported `Already up to date` before the design-spec target.
+- The approved architecture was checked against `DANIL_MASTER_PROMPT.md`, `TASKS.md`, `.codex/INTEGRATION_CONTRACT.md`, and `docs/ARCHITECTURE.md`.
+- Spec self-review found no placeholder markers and preserved transport neutrality, P0-before-P1 ordering, real-backend submission acceptance, and shared-contract ownership.
+- Independent architecture review returned `Ready to commit/push: Yes` after all findings were resolved.
+- No dependency install, scaffold, application code, or shared-contract change was made during design.
 
 ## Next exact target action
-Use the `brainstorming` workflow to agree the frontend stack, customer conversation UX, supervisor trace UX, and isolated fixture boundary; then write the Phase 1 implementation plan before scaffolding.
+Ask the user to review the written design spec. After explicit approval, invoke `writing-plans` and produce the file-level implementation plan before installing dependencies or scaffolding.
 
 ## Do not forget
 - Do not invent backend endpoints.

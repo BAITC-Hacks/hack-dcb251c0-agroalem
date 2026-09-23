@@ -7,6 +7,37 @@ Use this file for frontend -> backend handoffs and contract requests.
 
 Keep newest handoff at the top.
 
+## 2026-09-23 — Frontend architecture selected
+
+Frontend commit:
+`the commit containing this handoff; resolve with git log -1 --oneline`
+
+What is ready:
+- written frontend design reflecting the conversation-approved architecture at `docs/superpowers/specs/2026-09-23-frontend-voice-ux-design.md`, pending document review;
+- React, TypeScript, Vite, pnpm, CSS Modules, reducer-driven workflow state, and a `TurnClient` adapter boundary selected;
+- the design isolates future fixture-backed UI work from backend transport and routing behavior.
+
+Backend dependency / contract request:
+- provide the real endpoint and text/audio request encodings;
+- provide accepted microphone MIME types/codecs and `assistant_audio` delivery semantics;
+- jointly define a canonical scenario/backend execution latency field, which is required by project architecture but absent from the current contract;
+- document timeout, cancellation, stale-response, and error behavior with representative payloads.
+
+Observed payload/runtime evidence:
+- no real frontend or backend payload exists yet;
+- the design consumes the existing domain meanings without changing `.codex/INTEGRATION_CONTRACT.md`.
+
+How to reproduce:
+```powershell
+Get-Content -Raw docs\superpowers\specs\2026-09-23-frontend-voice-ux-design.md
+git diff HEAD^ -- .codex\INTEGRATION_CONTRACT.md
+```
+
+Known limitation:
+- this milestone is design-only; no dependencies, frontend runtime, fixture adapter, or UI exist yet.
+
+---
+
 ## 2026-09-23 — Server-only provider credential boundary verified
 
 Frontend commit:
