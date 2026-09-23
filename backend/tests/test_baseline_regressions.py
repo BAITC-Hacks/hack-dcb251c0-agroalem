@@ -82,19 +82,19 @@ def test_existing_prediction_threshold_is_unchanged(score, expected):
 def test_atomic_write_creates_parent_and_preserves_unicode(tmp_path):
     target = tmp_path / "вложено" / "predictions.json"
     write_predictions({"Қазақша": ["SC01"]}, target)
-    assert json.loads(target.read_text()) == {"Қазақша": ["SC01"]}
+    assert json.loads(target.read_text(encoding="utf-8")) == {"Қазақша": ["SC01"]}
     assert list(target.parent.glob("*.tmp")) == []
 
 
 def test_failed_atomic_replace_keeps_old_result(tmp_path, monkeypatch):
     path = tmp_path / "output.txt"
-    path.write_text("old")
+    path.write_text("old", encoding="utf-8")
     def fail(*args):
         raise PermissionError("unit-test failure")
     monkeypatch.setattr("backend.app.evaluation.os.replace", fail)
     with pytest.raises(PermissionError):
         write_text_atomic(path, "new")
-    assert path.read_text() == "old"
+    assert path.read_text(encoding="utf-8") == "old"
     assert list(tmp_path.glob("*.tmp")) == []
 
 
@@ -124,7 +124,7 @@ def test_partial_predictions_survive_provider_error(tmp_path, rows):
     checkpoint = tmp_path / "partial.json"
     with pytest.raises(RuntimeError):
         generate_predictions(StubRouter(fail_at=2), rows, checkpoint_path=checkpoint)
-    assert json.loads(checkpoint.read_text()) == {rows[0]["id"]: ["SC01"]}
+    assert json.loads(checkpoint.read_text(encoding="utf-8")) == {rows[0]["id"]: ["SC01"]}
 
 
 def test_progress_reports_only_completed_calls(rows):
@@ -147,8 +147,8 @@ def test_smoke_only_is_never_labelled_full_baseline(tmp_path, dataset):
     code = run_baseline.execute_baseline(StubRouter(), model="unit-fixture", dev_path=dataset,
         output_path=tmp_path / "predictions.json", report_path=report, smoke_only=True)
     assert code == 0
-    assert "status=SMOKE_COMPLETE" in report.read_text()
-    assert "full_baseline=NOT_RUN" in report.read_text()
+    assert "status=SMOKE_COMPLETE" in report.read_text(encoding="utf-8")
+    assert "full_baseline=NOT_RUN" in report.read_text(encoding="utf-8")
     assert not (tmp_path / "predictions.json").exists()
 
 
@@ -158,9 +158,9 @@ def test_failure_does_not_produce_full_predictions_or_leak_error(tmp_path, datas
         output_path=tmp_path / "predictions.json", report_path=report)
     assert code == 1
     assert not (tmp_path / "predictions.json").exists()
-    assert "status=FAILED" in report.read_text()
-    assert "completed_predictions=1" in report.read_text()
-    assert "SECRET-LIKE" not in report.read_text()
+    assert "status=FAILED" in report.read_text(encoding="utf-8")
+    assert "completed_predictions=1" in report.read_text(encoding="utf-8")
+    assert "SECRET-LIKE" not in report.read_text(encoding="utf-8")
     assert (tmp_path / "predictions.partial.json").exists()
 
 
@@ -171,7 +171,7 @@ def test_official_evaluator_subprocess_on_fixture_rows(tmp_path, dataset, monkey
     result = run_baseline.execute_baseline(StubRouter(), model="unit-fixture", dev_path=dataset,
         output_path=Path("output") / "fixture-predictions.json", report_path=report)
     assert result == 0
-    content = report.read_text()
+    content = report.read_text(encoding="utf-8")
     assert "status=COMPLETE" in content
     assert "dataset_count=3" in content
     assert "dataset_sha256=" in content
