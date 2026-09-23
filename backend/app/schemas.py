@@ -28,7 +28,7 @@ class RouterOutput(BaseModel):
 
     @field_validator("scenarios")
     @classmethod
-    def non_empty_reasoned_scenarios(
+    def unique_scenarios(
         cls, value: list[ScenarioDecision]
     ) -> list[ScenarioDecision]:
         seen: set[str] = set()
@@ -37,6 +37,11 @@ class RouterOutput(BaseModel):
                 raise ValueError(f"Duplicate scenario_id: {item.scenario_id}")
             seen.add(item.scenario_id)
         return value
+
+
+class TextTurnRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=128)
+    text: str = Field(min_length=1, max_length=4000)
 
 
 class LatencyTrace(BaseModel):
