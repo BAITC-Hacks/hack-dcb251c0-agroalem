@@ -10,10 +10,10 @@ At the end of EVERY completed target action, update this file in the same commit
 `danil/frontend`
 
 ## Current objective
-Obtain user review of the written frontend design spec, then create the file-level implementation plan before scaffolding.
+Implement frontend P0 as independently verified atomic targets, beginning with the React/TypeScript/Vite scaffold.
 
 ## Last completed goal
-Selected the frontend architecture and UX, then recorded the conversation-approved direction in `docs/superpowers/specs/2026-09-23-frontend-voice-ux-design.md` for written-spec review.
+Received explicit approval for the frontend design and the cascade from scaffold to real text E2E.
 
 ## Verified facts about current frontend
 - `danil/frontend` was synchronized with `origin/danil/frontend` before the audit.
@@ -37,12 +37,12 @@ Selected the frontend architecture and UX, then recorded the conversation-approv
 
 ## Backend integration status
 - Contract: `.codex/INTEGRATION_CONTRACT.md`
-- The contract defines the domain-level turn/trace shape but intentionally defines no HTTP/WebSocket transport or endpoint.
-- Actual transport/endpoints: UNKNOWN pending Tim's backend audit and handoff.
+- Read-only source: `origin/tim/backend` commit `926ccec` publishes `POST /v1/turn/text`, its request/response schema, and `422`/`502`/`503`/`504` behavior.
+- Text transport is documented, but browser-to-real-backend end-to-end behavior has not been run or confirmed on `danil/frontend`.
+- Voice upload transport, accepted MIME/codec, and `assistant_audio` representation remain `UNKNOWN` pending Tim's voice handoff.
 
 ## Open frontend blockers
-- The written design spec requires user review before implementation planning begins.
-- Backend transport/endpoints remain `UNKNOWN` until Tim's audit and handoff; Phase 1 must keep any fixture boundary isolated from transport assumptions.
+- Voice upload and response-audio contracts remain unknown; no audio endpoint may be guessed.
 - Canonical frontend format, lint, type-check, build, and test commands do not exist yet.
 
 ## Missing P0 frontend capabilities
@@ -64,16 +64,20 @@ Selected the frontend architecture and UX, then recorded the conversation-approv
 - Use batch `MediaRecorder` capture for P0; streaming remains out of scope until the working flow is measured.
 - Add tests with each functional slice rather than postponing them to a final testing phase.
 - Do not assign implementation agents until the approved implementation plan exposes independent, non-overlapping tasks.
+- Implement the published text endpoint before microphone capture or response-audio playback.
+- Use controlled responses only in tests or an explicitly selected development mode; real API errors remain failed turns.
+- Do not create or change a root shared contract as part of the text frontend slice.
 
 ## Latest commands actually run
-- `git pull --rebase origin danil/frontend` reported `Already up to date` before the design-spec target.
-- The approved architecture was checked against `DANIL_MASTER_PROMPT.md`, `TASKS.md`, `.codex/INTEGRATION_CONTRACT.md`, and `docs/ARCHITECTURE.md`.
-- Spec self-review found no placeholder markers and preserved transport neutrality, P0-before-P1 ordering, real-backend submission acceptance, and shared-contract ownership.
-- Independent architecture review returned `Ready to commit/push: Yes` after all findings were resolved.
-- No dependency install, scaffold, application code, or shared-contract change was made during design.
+- `git fetch origin tim/backend` updated only the remote-tracking reference for read-only inspection.
+- `git show origin/tim/backend:.codex/TIM_TO_DANIL.md`, `.codex/INTEGRATION_CONTRACT.md`, and `backend/app/main.py` confirmed the implemented text endpoint and the missing voice contract.
+- `backend/app/schemas.py` and `backend/tests/test_api.py` were also inspected read-only to align validation and semantics.
+- The approved Google Doc execution brief was read in full, including its only tab (`t.0`); it requires an atomic verified commit and push after each target.
+- No backend-owned file, local shared integration contract, `tim/backend`, or `main` change was made.
+- A premature uncommitted frontend scaffold was removed after the user withheld spec approval; no frontend runtime is claimed.
 
 ## Next exact target action
-Ask the user to review the written design spec. After explicit approval, invoke `writing-plans` and produce the file-level implementation plan before installing dependencies or scaffolding.
+Complete TARGET 1: scaffold the minimal React + TypeScript + Vite + pnpm + CSS Modules application, prove its scripts, then commit and push it atomically.
 
 ## Do not forget
 - Do not invent backend endpoints.

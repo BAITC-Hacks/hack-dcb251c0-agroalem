@@ -1,6 +1,8 @@
 # Frontend Voice UX Design
 
-Status: approved in conversation for written specification on 2026-09-23.
+Status: approved for implementation on 2026-09-23 by the user-provided frontend execution brief.
+
+Text integration update: Tim published `POST /v1/turn/text` on `origin/tim/backend`; the planned text slice is specified in `2026-09-23-text-turn-frontend-design.md`. Voice upload and assistant-audio transport remain unknown.
 
 Owner: Danil / frontend.
 
@@ -32,7 +34,7 @@ The frontend does not own:
 - evaluation logic;
 - backend endpoint or transport definitions.
 
-No provider secret may be exposed in browser code. No endpoint, audio representation, latency, or successful backend state may be invented while the backend contract remains unknown.
+No provider secret may be exposed in browser code. The published text endpoint may be consumed exactly as documented; no voice endpoint, audio representation, latency, or successful backend state may be invented while the voice contract remains unknown.
 
 ## 3. Selected approach
 
@@ -67,7 +69,7 @@ Microphone / text fallback │
               stable frontend integration port
                  ┌─────────┴─────────┐
                  v                   v
-        FixtureTurnAdapter   BackendTurnAdapter
+        FixtureTurnAdapter      HttpTurnAdapter
           local development    Tim's real transport
                  │                   │
                  └─────────┬─────────┘
@@ -88,7 +90,7 @@ interface TurnClient {
 
 `TurnInput` and `TurnResult` follow the domain meanings in `.codex/INTEGRATION_CONTRACT.md`. Frontend types may narrow data into presentation models, but they must not silently rename or reinterpret shared fields.
 
-`FixtureTurnAdapter` returns deterministic contract examples for frontend development. It does not infer scenarios from user text and does not imitate router logic. `BackendTurnAdapter` is added only after Tim documents the real transport, request encoding, response payload, audio delivery, and error semantics. If that transport is HTTP, the adapter may use native `fetch`; the UI and controller do not depend on this choice.
+`FixtureTurnAdapter` returns deterministic contract examples only in an explicitly selected development mode. It does not infer scenarios from user text, imitate router logic, or replace a failed real response. `HttpTurnAdapter` consumes Tim's published `POST /v1/turn/text`; a later voice adapter waits for Tim to document microphone request encoding, response-audio delivery, and voice-specific errors.
 
 ## 5. Module boundaries
 
@@ -189,7 +191,7 @@ The controller must reject duplicate submits for the same active turn, clean up 
 After every completed user turn, render backend-provided values for:
 
 - transcript;
-- language: `ru`, `kk`, or `mixed`;
+- language: `ru`, `kk`, `mixed`, or `unknown`;
 - selected scenario or scenarios;
 - confidence;
 - concise operational reason;
@@ -199,9 +201,8 @@ After every completed user turn, render backend-provided values for:
 - continuation state;
 - clarification state;
 - handoff state;
+- confirmation-required state, presented as a requirement rather than an executed action;
 - STT, triage, router, response, TTS-first-audio, and total latency.
-
-Project architecture also requires scenario/backend execution timing, but the current shared contract has no accepted field for that stage. The frontend requests a jointly reviewed canonical field and treats this timing as unavailable until the contract supplies it; it does not invent a field name or derive a fake duration.
 
 Missing values render as unavailable, for example `—`. Missing latency must never render as `0`. The UI displays concise backend evidence, not hidden chain-of-thought. Multiple scenarios are rendered as separate entries rather than flattened into one label.
 
@@ -259,15 +260,14 @@ Every implementation commit must pass the frontend's documented format, lint, ty
 
 ## 12. Delivery sequence
 
-1. Scaffold React, TypeScript, Vite, pnpm, quality commands, and the minimal two-surface shell.
-2. Add domain-derived frontend types, Zod boundary validation, `TurnClient`, and `FixtureTurnAdapter`.
-3. Deliver text conversation and per-turn supervisor trace.
-4. Deliver microphone capture with the complete permission/recording cleanup state machine.
-5. Deliver assistant audio playback and text-preserving failure behavior.
-6. Add `BackendTurnAdapter` from Tim's documented transport, switch the default demo path to it, and run real text, microphone, trace, and response-audio integration tests.
-7. Complete the runnable P0 path, one-command launch, and required browser checks before allowing P1 work to displace it.
-8. Deliver clarification, handoff, and confirmation UX after the P0 gate passes.
-9. Complete the final responsive/accessibility review and remaining critical Playwright coverage.
+1. Scaffold React, TypeScript, Vite, pnpm, CSS Modules, and the frontend quality commands.
+2. Add domain-derived frontend types, Zod boundary validation, `TurnClient`, and an explicit fixture client for isolated UI tests only.
+3. Deliver text input, stable session history, and customer loading/error states behind `TurnClient`.
+4. Deliver the matching per-turn supervisor trace, including `unknown`, multiple scenarios, confirmation requirements, and nullable latency.
+5. Add `HttpTurnClient` for Tim's published `POST /v1/turn/text`, with no automatic fixture fallback.
+6. Verify the text E2E flow and responsive access, reporting intercepted test responses separately from a real-backend smoke.
+7. Add microphone capture and assistant audio only in a later slice after Tim publishes the voice request and response-audio contract.
+8. Complete the runnable P0 path and one-command launch before allowing P1 work to displace it.
 
 Each coherent target receives verification, a state update, an atomic commit, and a push to `origin/danil/frontend`. Danil does not merge the branch into `main`.
 
@@ -288,17 +288,11 @@ Each coherent target receives verification, a state update, an atomic commit, an
 
 ## 14. Backend integration dependency
 
-The design can proceed through fixture-backed UI without a real endpoint. Real integration waits for Tim to document:
+Text integration uses Tim's published endpoint and schema. Voice integration still waits for Tim to document:
 
-- endpoint and transport;
-- text request encoding;
 - microphone audio request encoding and accepted MIME types/codecs;
-- response schema and error status semantics;
 - `assistant_audio` representation, content type, and streaming or complete-response behavior;
-- a jointly reviewed canonical field for scenario/backend execution latency;
 - timeout, cancellation, and stale-response behavior;
 - representative success, clarification, handoff, confirmation, malformed, and failure payloads.
 
 Any shared field change follows `.codex/INTEGRATION_CONTRACT.md` and requires both roles to review it.
-
-The canonical machine-readable exchange schema will belong in the repository-root `shared/contracts/` after Tim and Danil review its format. Frontend-local `TurnClient` models are consumption and presentation types, not a second source of truth. When the canonical schema exists, frontend validation must be generated from it or covered by a contract test that detects divergence.

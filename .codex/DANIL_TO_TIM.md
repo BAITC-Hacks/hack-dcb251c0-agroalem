@@ -18,9 +18,8 @@ What is ready:
 - the design isolates future fixture-backed UI work from backend transport and routing behavior.
 
 Backend dependency / contract request:
-- provide the real endpoint and text/audio request encodings;
+- text endpoint and request encoding are satisfied by Tim's published `POST /v1/turn/text` contract;
 - provide accepted microphone MIME types/codecs and `assistant_audio` delivery semantics;
-- jointly define a canonical scenario/backend execution latency field, which is required by project architecture but absent from the current contract;
 - document timeout, cancellation, stale-response, and error behavior with representative payloads.
 
 Observed payload/runtime evidence:
