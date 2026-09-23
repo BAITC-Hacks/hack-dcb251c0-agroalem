@@ -17,7 +17,8 @@ export class HttpTurnClient implements TurnClient {
     private readonly fetchImpl: typeof fetch = globalThis.fetch.bind(
       globalThis,
     ),
-    private readonly timeoutMs = 60_000,
+    // The text pipeline can make routing and grounded-answer calls sequentially.
+    private readonly timeoutMs = 120_000,
   ) {}
 
   async submit(input: TurnInput, signal?: AbortSignal): Promise<TurnResult> {
