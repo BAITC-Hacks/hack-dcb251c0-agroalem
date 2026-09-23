@@ -25,10 +25,10 @@ The committed `pnpm-lock.yaml` is the reproducible dependency source.
 
 ## Run against Tim backend
 
-Start the backend on its documented default port, then run the frontend:
+Start the backend from a separate `tim/backend` checkout on its documented default port (this frontend branch does not contain `backend/` or the launcher):
 
 ```powershell
-py -m uvicorn backend.app.main:app --reload
+py run_mvp.py
 ```
 
 ```powershell
@@ -100,4 +100,6 @@ Implemented and verified text-only E2E UI:
 - desktop side-by-side surfaces and mobile conversation/trace scrolling above a pinned, non-overlay composer;
 - empty/whitespace send lockout and large-text responsive layout.
 
-Voice remains deliberately out of scope until Tim publishes the audio transport and assistant-audio contract.
+Tim has now published audio contract v0.2 in `origin/tim/backend`. The supplied `AudioApiClient` is transport-only; recording and assistant playback are not connected to the React UI yet. Run its isolated test-response checks with `node --test scripts/audio.check.mjs`. The prior live text evidence does not verify the new audio/grounded-answer backend.
+
+See [AUDIO_HANDOFF.md](AUDIO_HANDOFF.md) and the [root README](../README.md) for current branch-specific status and setup. Full-generation `tts` must not be substituted for unavailable `tts_first_audio`. If only synthesis fails, preserve the successful transcript/text/trace and retry only speech.

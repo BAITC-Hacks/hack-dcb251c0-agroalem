@@ -1,335 +1,181 @@
-# Voice Router
+# Voice Router · Saqta Insurance
 
-Гибридный голосовой AI-робот с LLM-слоем выбора сценария для кейса Halyk Bank на HackAlem AI.
+Веб-симулятор контакт-центра для кейса HackAlem AI / Halyk Bank. Клиент обращается в вымышленную страховую компанию Saqta, а LLM выбирает подходящий сценарий из официального каталога. Супервизор видит, что распознано, какой сценарий выбран, почему и сколько заняли этапы обработки.
 
-> Главная задача проекта — не «сделать красивого голосового ассистента», а повысить качество маршрутизации живой речи: смена темы, соседние сценарии, русский/казахский и смешанная речь.
+## Что требует задание
 
-## Что строим
+Основной путь для жюри: **микрофон → распознавание речи → LLM-маршрутизация → ответ → озвучка**. Текст — дополнительный канал, не замена голосового MVP.
 
-Пользователь говорит в микрофон браузера. Система:
+- 40 бизнес-сценариев `SC01`–`SC40` и 3 системных intent из исходного starter kit.
+- Русский, казахский и смешанная речь; контекст до 10 ходов, смена темы и близкие сценарии.
+- После каждой реплики: transcript, сценарии, краткая причина, confidence, alternatives, slots/actions и измеренное время этапов.
+- При неопределённости — уточнение или необходимость оператора. Необратимые действия — только после подтверждения.
+- Воспроизводимый запуск, тесты и официальный routing evaluation.
 
-1. распознаёт речь;
-2. учитывает контекст диалога;
-3. передаёт содержательное решение LLM-router;
-4. выбирает один из сценариев;
-5. при низкой уверенности уточняет запрос или передаёт разговор оператору;
-6. выполняет разрешённую логику сценария на синтетических данных;
-7. формирует ответ;
-8. озвучивает его;
-9. показывает супервизору трассировку решения и latency по этапам.
+LLM принимает содержательное решение о сценарии. Готовый intent-классификатор, соответствия «тестовая фраза → ответ», вымышленные результаты и latency недопустимы. Данные Saqta синтетические, не реальные страховые рекомендации.
 
-## Почему LLM
+## Готовность на 23 сентября 2026
 
-Кейс специально направлен на отказ от классического intent-классификатора как финального слоя маршрутизации.
+Этот README находится в **`danil/frontend`**. Backend опубликован отдельно в **`tim/backend`**; наличие backend-функции там не означает, что она уже подключена в React здесь.
 
-LLM должна принимать содержательное решение на основании:
-- текущей реплики;
-- контекста диалога;
-- описаний сценариев;
-- границ между близкими сценариями;
-- доступных параметров и действий.
+| Часть | Реальное состояние |
+| --- | --- |
+| Интерфейс по референсам | React/TypeScript/Vite: переписка клиента, отдельный supervisor trace, светлый Saqta-дизайн; desktop и мобильный экран. |
+| Текстовый диалог | `HttpTurnClient`, постоянный `session_id`, история, ожидание, отмена, ошибки и повтор. Нет автоматического перехода на fixtures. |
+| Trace | Свой trace у каждой реплики; причина и confidence внутри карточки каждого сценария; transcript, `unknown`, состояния уточнения/оператора/подтверждения/продолжения; `null` отображается как `—`. |
+| Мобильная доступность | Trace прокручивается целиком над полем ввода; проверены 320/360 px и 200% текста. Пустая отправка заблокирована. |
+| Backend текста | В `origin/tim/backend@14346a1`: FastAPI, LLM-router, история, policy и ответ по официальной базе знаний. Новый answer pipeline ещё требует отдельной живой приёмки. |
+| Backend аудио | В ветке Тима опубликованы transcriptions, speech и audio turn; это больше не неизвестный контракт. Живой полный голосовой прогон здесь пока не подтверждён. |
+| Аудиотранспорт frontend | `AudioApiClient` добавлен в `b3f0982`; локально пройдены 16 тестов с контролируемыми ответами. Микрофон и плеер в React ещё не подключены. |
+| Страховые операции | Не исполняются: `actions=[]`. `requires_confirmation` — требование сценария, а не выполненное действие. `handoff` не означает реальное соединение с оператором. |
+| Ссылка для жюри | Пока не опубликована. `127.0.0.1` доступен только на компьютере, где запущено приложение. Нужен отдельный HTTPS-хостинг frontend и backend. |
 
-Encoder intent-classifier не используется как финальный decision layer.
+**Итог: проверен текстовый интерфейс; полный голосовой MVP и публичная песочница ещё не приняты.**
 
-## Must-have
+### Что действительно проверено
 
-- голосовое взаимодействие в вебе;
-- микрофон → распознавание → голосовой ответ;
-- LLM-слой выбора сценария;
-- корректная маршрутизация на 40 исходных сценариях;
-- русский и казахский;
-- смешение языков;
-- трассировка после каждой реплики;
-- выбранный сценарий;
-- краткое обоснование;
-- альтернативы;
-- latency по этапам;
-- uncertainty / clarification;
-- handoff оператору, когда система не справляется;
-- подтверждение клиента перед необратимым действием;
-- запуск проекта одной командой.
+На frontend `fcb9efb`:
 
-## Что не допускается
+- форматирование, ESLint, TypeScript и production build;
+- 21 Vitest, 23 транспортных и 11 браузерных тестов с тестовыми ответами;
+- отдельно: настоящий успешный браузерный текстовый запрос через backend `ce761bd` и OpenAI;
+- отдельно: настоящий backend `503` без настроенного провайдера, без подмены ответом из fixture.
 
-- готовый intent-классификатор как слой принятия решения;
-- hardcode соответствия тестовых фраз сценариям;
-- демо только на одном заранее подготовленном диалоге;
-- fake data processing;
-- скрытый black box без объяснения;
-- реальные записи разговоров;
-- реальные персональные данные;
-- необратимые действия без подтверждения.
+На принятом обновлении frontend `b3f0982`:
 
-## Данные
+- `node --test scripts/audio.check.mjs`: **16 passed** на машине Данила;
+- `pnpm check` пока останавливается на Prettier в четырёх добавленных/изменённых аудиотранспортом файлах. Это зафиксированный остаток, а не зелёная проверка новой сборки.
 
-Официальный starter kit находится в [`starter-kit/`](starter-kit/) и содержит:
+Старые живые текстовые проверки нельзя переносить на новый backend/audio pipeline. Полный живой RU/KK/mixed voice smoke, свежий клон и routing baseline остаются открытыми. Accuracy и выполнение latency SLA не заявляются без измерений.
 
-```text
-scenarios.json
-dialogs_sample.json
-knowledge_base.json
-mock_backend.json
-dev_utterances.json
-evaluate.py
+## Запуск текущего React-интерфейса
+
+Используются два отдельных checkout. Слияние веток для разработки frontend не требуется.
+
+### 1. Backend в отдельной папке
+
+Нужны Git, Python 3.10+ и интернет для зависимостей и API. Для нового checkout выберите свободную папку:
+
+```powershell
+git clone --single-branch --branch tim/backend https://github.com/BAITC-Hacks/hack-dcb251c0-agroalem.git voice-router-backend
+cd voice-router-backend
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
+notepad .env.local
 ```
 
-Перед реализацией необходимо проверить фактическую структуру файлов и использовать её как source of truth.
+В `.env.local` задайте разрешённый серверный `OPENAI_API_KEY`, затем:
 
-## Командная работа
-
-Проект разделён между двумя компьютерами: Tim отвечает за backend и LLM-routing, Danil — за frontend, голосовой UX и supervisor panel. Ветки, master prompts, Git-память и правила handoff описаны в [`README_TEAM_SETUP.md`](README_TEAM_SETUP.md).
-
-Ключевые файлы:
-
-- [`docs/TEAM_SPLIT.md`](docs/TEAM_SPLIT.md) — границы ответственности;
-- [`docs/CASCADE_GOALS.md`](docs/CASCADE_GOALS.md) — порядок общих и ролевых этапов;
-- [`prompts/TIM_MASTER_PROMPT.md`](prompts/TIM_MASTER_PROMPT.md) — управляющая инструкция backend-компьютера;
-- [`prompts/DANIL_MASTER_PROMPT.md`](prompts/DANIL_MASTER_PROMPT.md) — управляющая инструкция frontend-компьютера;
-- [`.codex/PROJECT_TRUTH.md`](.codex/PROJECT_TRUTH.md) — проверенные факты и anti-hallucination protocol;
-- [`.codex/INTEGRATION_CONTRACT.md`](.codex/INTEGRATION_CONTRACT.md) — общий domain contract без выдуманного endpoint.
-
-## Архитектура
-
-```text
-Browser microphone
-        |
-        v
-       STT
-        |
-        v
- Dialogue State
-        |
-        v
-Candidate Preparation
-        |
-        v
-    LLM Router
-        |
-        v
-Confidence / Safety Policy
-    |           |
-    |           +--> Clarification / Operator
-    v
-Scenario Executor
-    |
-    +--> Knowledge Base
-    |
-    +--> Mock Backend
-    |
-    v
-Response
-    |
-    v
-TTS
-    |
-    v
-Browser playback
-
-All stages
-    |
-    v
-Trace / Telemetry
-    |
-    v
-Supervisor Panel
+```powershell
+py run_mvp.py
 ```
 
-Подробнее: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+Скрипт из **ветки Тима** создаёт Python environment, устанавливает `backend/requirements.txt` и запускает сервер на `http://127.0.0.1:8000`. В этой ветке frontend файла `run_mvp.py` нет. На `/` backend есть самостоятельная функциональная страница для проверки — это не React-интерфейс по референсам.
 
-## Основной demo-flow
+### 2. Frontend в другом терминале
 
-### Клиент
-1. Нажимает кнопку микрофона.
-2. Говорит естественную реплику.
-3. Получает голосовой ответ.
-4. Может сменить тему или язык.
-5. При неоднозначности получает уточняющий вопрос.
-6. При невозможности решить вопрос получает handoff к оператору.
+Нужны Node.js и pnpm. На машине разработки проверены Node `24.19.0` и pnpm `11.19.0`; точный package manager закреплён в `frontend/package.json`.
 
-### Супервизор
-После каждой реплики видит:
-- transcript;
-- scenario;
-- rationale;
-- alternatives;
-- confidence;
-- stage latency;
-- clarification / handoff state.
+Для нового checkout:
 
-Подробнее: [`docs/DEMO.md`](docs/DEMO.md)
-
-## Routing contract
-
-LLM-router должен возвращать структурированный результат.
-
-Пример концептуальной схемы:
-
-```json
-{
-  "selected_scenario_id": "SCENARIO_ID",
-  "confidence": 0.91,
-  "alternatives": [
-    {
-      "scenario_id": "OTHER_SCENARIO",
-      "confidence": 0.07,
-      "reason": "short reason"
-    }
-  ],
-  "rationale": "short operational explanation",
-  "needs_clarification": false,
-  "clarification_question": null,
-  "needs_operator": false,
-  "detected_language": "ru",
-  "extracted_parameters": {}
-}
+```powershell
+git clone --single-branch --branch danil/frontend https://github.com/BAITC-Hacks/hack-dcb251c0-agroalem.git voice-router-frontend
+cd voice-router-frontend/frontend
+pnpm install --frozen-lockfile
+pnpm dev --host 127.0.0.1 --port 5173 --strictPort
 ```
 
-Реальная схема должна быть согласована с кодовой базой и starter kit.
+Откройте **http://127.0.0.1:5173/**. Если папка проекта уже существует, используйте её `frontend/`, не выполняя повторное клонирование поверх файлов.
 
-## Производительность
+Vite отправляет `/api/*` на `http://127.0.0.1:8000/*`. Поэтому оба процесса в этом примере работают на одном компьютере. Ключ не передаётся frontend. `VITE_API_BASE_URL` — только несекретный адрес API; для другого origin потребуется соответствующий CORS и HTTPS.
 
-Целевые ориентиры кейса:
+Текущий `pnpm dev` использует **настоящий HTTP adapter**, не demo-ответы. Без backend или доступного API появится ошибка. Наличие `/health` означает доступность сервера/каталога, а не успешный вызов модели.
 
-- выбор сценария: около **500 ms**;
-- конец реплики → начало ответа: около **1.5 s**.
+Запуск всей React-сборки одной командой и постоянный адрес для жюри ещё нужно подготовить. `py run_mvp.py` запускает встроенное демо Тима, не объединяет автоматически две ветки.
 
-В интерфейсе показываются реальные замеры. Значения нельзя подменять или захардкодить.
+## Модели и ключи
 
-Измеряем как минимум:
+Текущий backend Тима использует OpenAI; имена ниже взяты из `backend/app/config.py`, это не результаты сравнения качества:
 
-```text
-STT
-router preparation
-LLM routing
-backend/scenario execution
-response generation
-TTS start
-total
+| Переменная | По умолчанию |
+| --- | --- |
+| `OPENAI_ROUTER_MODEL` | `gpt-4.1-mini` |
+| `OPENAI_RESPONSE_MODEL` | `gpt-4.1-mini` |
+| `OPENAI_STT_MODEL` | `gpt-4o-mini-transcribe` |
+| `OPENAI_TTS_MODEL` | `gpt-4o-mini-tts` |
+| `OPENAI_TTS_VOICE` | `coral` |
+| `OPENAI_TIMEOUT_SECONDS` | `45` на запрос провайдеру |
+
+`OPENAI_API_KEY` хранится только в игнорируемом серверном `.env.local` или секретах хостинга. Не помещайте ключи в Git, README, frontend и `VITE_*`. Переменные процесса имеют приоритет над локальным env-файлом. Ключ, опубликованный в чате, следует заменить; в репозитории его копий быть не должно.
+
+NVIDIA STT/TTS в этой сборке не подключены. Их пригодность для RU/KK/mixed нужно оценить отдельно до смены провайдера.
+
+### HackAlem Sandbox и проверка жюри
+
+Согласно переданной инструкции организаторов, HackAlem Sandbox предоставляет рабочее пространство ChatGPT/Codex и отдельный API-проект команды. Вход в Codex не настраивает `OPENAI_API_KEY` нашего сервера автоматически. Доступ и бюджет конкретного API-проекта нужно проверить отдельно.
+
+В этой инструкции нет адреса сервера для размещения Voice Router. Workspace/API-проект не является готовой ссылкой на наше приложение. Цель команды — доступное жюри **онлайн-демо**, не автономный offline-режим. Для него нужны HTTPS-адрес, запущенный backend, серверные секреты, ограничение доступа/расходов и проверка микрофона. Сейчас такой адрес не заявляется опубликованным.
+
+## Опубликованный API
+
+Источник истины — `.codex/INTEGRATION_CONTRACT.md` в **`origin/tim/backend`**, а не старая копия в frontend-ветке:
+
+```powershell
+git fetch origin tim/backend:refs/remotes/origin/tim/backend
+git show origin/tim/backend:.codex/INTEGRATION_CONTRACT.md
 ```
 
-## Evaluation
+| Endpoint | Назначение |
+| --- | --- |
+| `POST /v1/turn/text` | JSON `session_id`, `text` → ответ и trace. |
+| `POST /v1/audio/transcriptions` | Multipart `file` → transcript и измеренное время. |
+| `POST /v1/audio/speech` | JSON `text` → MP3. |
+| `POST /v1/turn/audio` | Multipart `session_id`, `file`, `include_audio` → текстовый результат и необязательное MP3 base64. |
 
-Routing changes нельзя принимать «на глаз».
+Форматы: WebM, MP4/M4A, MP3, WAV; до 20 MiB. Точный список MIME и ошибки приведены в контракте. Если TTS завершился ошибкой после успешного текстового хода, сохраняются transcript, ответ и trace; повторяется только синтез, не весь диалоговый ход.
 
-Используем:
-- `dev_utterances.json`;
-- `dialogs_sample.json`;
-- `evaluate.py`;
-- собственные regression tests.
+Дополнительное `tts` — длительность полной генерации. `tts_first_audio=null` не заменяется этим значением: время до реально услышанного звука не измерено. Память backend локальна одному процессу; перезапуск сбрасывает сессии.
 
-Перед submission:
+## Проверки и evaluation
 
-```text
-1. run unit/integration tests
-2. run official local evaluation
-3. record real accuracy
-4. inspect failures
-5. verify RU / KK / mixed cases
-6. verify topic changes
-7. verify close-scenario boundaries
-8. verify low-confidence behavior
+Frontend:
+
+```powershell
+cd frontend
+pnpm check
+node --test scripts/audio.check.mjs
+pnpm exec playwright install chromium
+pnpm test:e2e
 ```
 
-Подробнее: [`docs/EVALUATION.md`](docs/EVALUATION.md)
+Обычные frontend-тесты используют явно тестовые ответы и не расходуют API-квоту. Настоящие backend-проверки включаются отдельно; команды и ограничения описаны в [frontend/README.md](frontend/README.md).
 
-## Запуск
+В отдельном checkout backend:
 
-> Codex: заменить этот раздел реальными командами после выбора стека. Не оставлять placeholder к submission.
-
-### Prerequisites
-
-```text
-TODO: actual prerequisites
+```powershell
+py run_mvp.py --check
+.venv\Scripts\python.exe -m backend.scripts.run_baseline
 ```
 
-### Environment
+Baseline выполняет реальные запросы и расходует API-квоту. Официальный evaluator для уже подготовленных predictions:
 
-```bash
-cp .env.example .env
+```powershell
+.venv\Scripts\python.exe starter-kit/evaluate.py predictions.json starter-kit/dev_utterances.json
 ```
 
-Заполнить только реально используемые переменные.
+Исходный dev-набор содержит 104 реплики. В отчёте должны быть реальные primary accuracy, full match, multi-intent recall, разбивки RU/KK/mixed и SHA проверенного кода. Тестовые fixtures не являются routing baseline.
 
-### Start
+## Осталось до сдачи
 
-Проект должен запускаться одной командой:
+1. Подключить запись/стоп/отмену микрофона и плеер к опубликованному аудиотранспорту, проверить разрешения, cleanup и ошибки.
+2. Провести живые проверки нового backend: текст, голос, RU/KK/mixed, смена темы, уточнение и handoff. Отдельно проверить отказ TTS без потери текста/trace.
+3. Запустить evaluation и зафиксировать измерения, не выдумывая показатели.
+4. Подготовить единый воспроизводимый запуск React + backend, HTTPS-песочницу для жюри и защиту серверной API-квоты.
+5. Провести свежий клон и финальную интеграционную проверку. Не выдавать read-only консультацию за исполнение страховых операций.
 
-```bash
-TODO: one canonical command
-```
+## Файлы проекта
 
-### Evaluation
+- [Требования хакатона](docs/HACKATHON_REQUIREMENTS.md), [исходные данные](starter-kit/README.ru.md), [архитектура](docs/ARCHITECTURE.md).
+- [Frontend](frontend/README.md), [аудио-handoff](frontend/AUDIO_HANDOFF.md), [состояние Данила](.codex/DANIL_STATE.md).
+- [Разделение ролей](docs/TEAM_SPLIT.md), [план этапов](docs/CASCADE_GOALS.md), [TASKS](TASKS.md).
 
-```bash
-TODO: actual evaluation command
-```
-
-## Структура репозитория
-
-Рекомендуемая, а не обязательная:
-
-```text
-.
-├── AGENTS.md
-├── README.md
-├── docs/
-│   ├── HACKATHON_REQUIREMENTS.md
-│   ├── ARCHITECTURE.md
-│   ├── EVALUATION.md
-│   └── DEMO.md
-├── ...
-└── starter-kit / data / app
-```
-
-Codex должен адаптировать документацию под фактическую структуру проекта, а не наоборот.
-
-## Scoring focus
-
-| Критерий | Баллы |
-|---|---:|
-| Соответствие задаче и работоспособность | 25 |
-| Техническая реализация | 25 |
-| README и воспроизводимость | 25 |
-| Ценность и применимость | 15 |
-| Потенциал развития и оригинальность | 10 |
-| **Итого** | **100** |
-
-## Приоритет разработки
-
-```text
-P0
-Voice input
-LLM routing
-40 scenarios
-RU / KK / mixed language
-trace panel
-real evaluation
-one-command launch
-
-P1
-dialogue context
-clarification
-operator handoff
-confirmation before irreversible actions
-boundary handling
-latency optimization
-
-P2
-hybrid fast/complex route
-interrupted-topic return
-parameter extraction
-streaming
-emotion/tone
-supervisor statistics
-catalog editing UI
-```
-
-## Документация
-
-- [`AGENTS.md`](AGENTS.md) — правила для Codex
-- [`docs/HACKATHON_REQUIREMENTS.md`](docs/HACKATHON_REQUIREMENTS.md) — требования кейса
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — технический design
-- [`docs/EVALUATION.md`](docs/EVALUATION.md) — проверка качества
-- [`docs/DEMO.md`](docs/DEMO.md) — сценарий показа жюри
-- [`CODEX_START.md`](CODEX_START.md) — первый prompt для Codex
-- [`TASKS.md`](TASKS.md) — backlog
+Данил работает в `danil/frontend`, Тим — в `tim/backend`. Финальная интеграция в `main` отдельна от публикации ролевых коммитов. Backend-ветка не сливалась в frontend для обновления этого README.

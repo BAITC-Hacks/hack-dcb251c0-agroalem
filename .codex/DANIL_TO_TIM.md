@@ -5,6 +5,18 @@ Reader: Tim.
 
 Use this file for frontend -> backend handoffs and contract requests. Keep newest handoff at the top.
 
+## 2026-09-23 — README status refreshed; audio contract received
+
+Explicit user target: update root README and commit/push it before subsequent audio/provider work. README now separates the verified fcb9efb text UI from the newly published 14346a1 audio/grounded-answer backend and documents real separate-checkout commands. No backend branch or shared contract was modified.
+
+Accepted b3f0982 by fast-forward of danil/frontend only. Local `node --test scripts/audio.check.mjs`: 16 passed with controlled responses. Local `pnpm check`: blocked at formatting in four transport-added/changed files; not claimed green and not mixed into this documentation commit.
+
+The prior voice-UNKNOWN blocker is resolved by remote contract v0.2. Remaining frontend work is actual recorder/playback/schema wiring, AI-voice disclosure and browser/live audio acceptance. Optional tts is generation duration, not first-heard audio. Text/trace must survive TTS failure.
+
+User clarified that the target is an online sandbox for judges, not offline inference. The HackAlem invitation provides workspace/API access; a hosted HTTPS app endpoint is still needed. Current local launcher has no authentication/rate limiter; public hosting needs access/quota protection and a single-process session strategy.
+
+---
+
 ## 2026-09-23 — Saqta reference UI verified; voice MVP dependency remains
 
 Frontend commit: the commit containing this handoff (`git log -1 --oneline`). Branch: `danil/frontend`.

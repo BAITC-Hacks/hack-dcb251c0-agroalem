@@ -22,7 +22,7 @@
 - [ ] Run official `evaluate.py`.
 - [ ] Add reproducible automated tests.
 - [ ] Create one-command launch.
-- [ ] Replace all README setup placeholders with real commands.
+- [x] Replace root README setup placeholders with branch-specific commands and honest readiness evidence. (Danil, explicitly requested; combined launch/live voice remain open.)
 
 ## P1 — robustness and score
 
