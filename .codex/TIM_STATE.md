@@ -60,3 +60,17 @@ Actual code commit for this entry is the commit containing this file; resolve wi
 ## Next exact gate
 
 On a full authorized checkout with the ignored OpenAI key configured: run `py run_mvp.py --check`, then `.venv\Scripts\python.exe -m backend.scripts.run_baseline`. Record actual model, source SHA, metrics and failures. Start `py run_mvp.py`; verify one successful and one failed browser text request, one microphone request and speech playback against the NEW backend. Resolve integration conflicts only with these results visible. Do not claim main/release readiness from a fixture test or mergeable PR alone.
+
+## README reconciliation: 2026-09-23
+
+Documentation-only target requested by Tim before researching alternative speech providers.
+
+- Re-read requirements, current README, launcher and both roles' published state at backend aa864a2 and frontend b3f0982.
+- Rewrote the root README with a requirement/implementation/verification matrix. A text-only UI does not complete the mandatory voice case.
+- Attributed Danil's successful and failed live text checks to backend ce761bd; did not count them as acceptance of the new audio/answer pipeline.
+- Preserved runnable setup, model settings, API/error semantics, evaluator commands, jury instructions and read-only limitations.
+- Distinguished the organizer-provided HackAlem Sandbox workspace invitation from API project access and from offline model execution. No offline model deployment is present.
+- Checked the generated README for valid UTF-8, balanced fenced code blocks and absence of secret-shaped API keys. Its Git blob is 81e021e0a7c6af1e18dd40e4111464f5e8277e8a.
+- No application tests, live provider calls, local Windows configuration changes, key installation, model/provider switch or merge were performed by this documentation target. Existing runtime evidence above remains historical and unchanged.
+
+Next work remains the live acceptance gate above. Any NVIDIA option must first be checked for RU/KK/mixed coverage and deployment requirements; it is not enabled by editing documentation.
