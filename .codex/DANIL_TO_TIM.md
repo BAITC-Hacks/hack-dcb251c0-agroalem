@@ -1,3 +1,38 @@
+## 2026-09-23 — FIRST REAL TEXT E2E UI code ready
+
+Frontend commits:
+- scaffold: `5ef09a3cb4d6fec4a5b3f37a3a40a97581471bab`
+- text UI: `ce7c0e6a3f81192aed5b8e5f891d4f830d56efc8`
+
+What is implemented in code:
+- React + TypeScript + Vite + pnpm frontend;
+- customer text input and immutable conversation exchanges;
+- real `HttpTurnClient` for `POST /v1/turn/text`;
+- Zod validation of Tim's response contract;
+- loading and backend error presentation;
+- supervisor trace for routing data and real/missing latency;
+- component test for a successful text turn and trace;
+- Vite dev proxy `/api -> http://127.0.0.1:8000`.
+
+Verification still required on Danil PC:
+```powershell
+cd frontend
+pnpm install
+pnpm check
+pnpm dev
+```
+
+Then run one real request against Tim backend and record the evidence.
+
+Backend dependency:
+- text contract is sufficient for this milestone;
+- voice contract is still not required.
+
+Known limitation:
+- no claim is made yet that dependencies installed, build passed, or browser-to-backend E2E passed. Those require Danil's local runtime.
+
+---
+
 # DANIL_TO_TIM.md
 
 Owner/writer: Danil.

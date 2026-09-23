@@ -10,10 +10,10 @@ At the end of EVERY completed target action, update this file in the same commit
 `danil/frontend`
 
 ## Current objective
-Implement frontend P0 as independently verified atomic targets, beginning with the React/TypeScript/Vite scaffold.
+Verify FIRST REAL TEXT E2E UI locally: install dependencies, run typecheck/test/build, then run against Tim's real `POST /v1/turn/text`.
 
 ## Last completed goal
-Received explicit approval for the frontend design and the cascade from scaffold to real text E2E.
+Implemented the text UI code path: React/Vite scaffold, real TurnClient HTTP adapter, conversation surface, supervisor trace, runtime Zod validation, loading/error states and component test.
 
 ## Verified facts about current frontend
 - `danil/frontend` was synchronized with `origin/danil/frontend` before the audit.
@@ -29,8 +29,14 @@ Received explicit approval for the frontend design and the cascade from scaffold
 - No application manifest or source code exists yet, so there is no project dev server to restart and no current browser/server credential usage to repair.
 - The repository currently has no tracked `.env.example`; this shared environment contract must be added with variable names only when the backend provider adapters are implemented.
 
-## UI components currently working
-- None.
+## UI components currently working in code
+- Customer text composer.
+- Conversation history with pending/success/error states.
+- Supervisor trace for scenarios, confidence, alternatives, flags and latency.
+- Real HTTP adapter for `POST /v1/turn/text`.
+- Zod response-contract validation.
+
+Runtime verification is still pending local `pnpm install && pnpm check`.
 
 ## Voice capture/playback status
 - Not implemented.
@@ -42,8 +48,9 @@ Received explicit approval for the frontend design and the cascade from scaffold
 - Voice upload transport, accepted MIME/codec, and `assistant_audio` representation remain `UNKNOWN` pending Tim's voice handoff.
 
 ## Open frontend blockers
+- Local dependency installation and `pnpm check` have not yet been executed after the new scaffold.
+- Real browser-to-backend text E2E has not yet been run.
 - Voice upload and response-audio contracts remain unknown; no audio endpoint may be guessed.
-- Canonical frontend format, lint, type-check, build, and test commands do not exist yet.
 
 ## Missing P0 frontend capabilities
 - Customer text-input fallback and conversation history.
@@ -77,7 +84,7 @@ Received explicit approval for the frontend design and the cascade from scaffold
 - A premature uncommitted frontend scaffold was removed after the user withheld spec approval; no frontend runtime is claimed.
 
 ## Next exact target action
-Complete TARGET 1: scaffold the minimal React + TypeScript + Vite + pnpm + CSS Modules application, prove its scripts, then commit and push it atomically.
+On Danil PC: `cd frontend && pnpm install && pnpm check`, commit generated `pnpm-lock.yaml`, then start Tim backend and `pnpm dev` and verify one real text turn plus trace. Record exact evidence in this file.
 
 ## Do not forget
 - Do not invent backend endpoints.
