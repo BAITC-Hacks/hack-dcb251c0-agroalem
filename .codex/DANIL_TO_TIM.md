@@ -7,6 +7,35 @@ Use this file for frontend -> backend handoffs and contract requests.
 
 Keep newest handoff at the top.
 
+## 2026-09-23 — Server-only provider credential boundary verified
+
+Frontend commit:
+`the commit containing this handoff; resolve with git log -1 --oneline`
+
+What is ready:
+- local ignored `.env.local` contains usable OpenAI and NVIDIA provider credentials without browser-public prefixes;
+- both credentials passed read-only authentication checks against their official hosted API endpoints;
+- frontend ownership is explicitly limited to microphone capture, backend transport, and audio playback, with no provider secret access.
+
+Backend dependency / contract request:
+- keep OpenAI routing and NVIDIA STT/TTS provider calls in server-side adapters;
+- define the real audio upload/stream and response-audio transport before frontend integration;
+- add a tracked `.env.example` with variable names only when the backend runtime is scaffolded; never include secret values.
+
+Observed payload/runtime evidence:
+- no application manifest, frontend/backend source tree, provider adapter, endpoint, or dev server exists yet;
+- no direct provider API call or public-prefixed provider credential reference exists in tracked repository content.
+
+How to reproduce:
+```powershell
+git check-ignore -v -- .env.local
+rg --files -g 'package.json' -g 'src/**' -g 'frontend/**' -g 'backend/**'
+rg -n --hidden -g '!.git/**' -g '!.env*' -g '!starter-kit/**' '(VITE_|NEXT_PUBLIC_|PUBLIC_).*(KEY|TOKEN)'
+```
+
+Known limitation:
+- the server-side STT/TTS provider and transport contract are not implemented, so frontend voice integration remains blocked on Tim's backend handoff.
+
 ## 2026-09-23 — Phase 0 frontend audit
 
 Frontend commit:
