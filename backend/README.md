@@ -2,47 +2,101 @@
 
 Backend owner: Tim.
 
-## Current stack decision
-Because the repository had no application framework after Phase 0, the initial backend stack is:
-- Python
+## Stack
+
+The repository had no application framework before backend Phase 0, so the initial backend stack is an explicit team engineering decision:
+
+- Python 3.10+
 - FastAPI
-- Pydantic
-- OpenAI SDK
+- Pydantic v2
+- OpenAI Python SDK
 - pytest
 
-This is an engineering decision, not a claim about a pre-existing stack.
+The current OpenAI SDK dependency range is recorded in `backend/requirements.txt`.
+
+## Router model
+
+Initial default:
+
+```text
+gpt-5.6-luna
+```
+
+Override with:
+
+```text
+OPENAI_ROUTER_MODEL=<model-id>
+```
+
+The default is a starting model for routing evaluation, not a claim that it is already the best model. Model quality/latency must be measured against the official dev set.
 
 ## Windows setup
 
 From repository root:
 
-    py -m venv .venv
-    .venv\Scripts\activate
-    py -m pip install -r backend\requirements.txt
+```powershell
+py -m venv .venv
+.venv\Scripts\activate
+py -m pip install -r backend\requirements.txt
+```
 
-If `python` is the configured launcher, use it instead of `py`.
+Configure server-side credentials:
 
-## Run current backend
+```powershell
+$env:OPENAI_API_KEY="..."
+$env:OPENAI_ROUTER_MODEL="gpt-5.6-luna"
+```
 
-    py -m uvicorn backend.app.main:app --reload
+Never expose `OPENAI_API_KEY` in frontend code or commit it.
 
-Current implemented endpoint:
+## Run
 
-    GET /health
+```powershell
+py -m uvicorn backend.app.main:app --reload
+```
 
-The customer turn endpoint is intentionally NOT defined yet. It will be added only with the real LLM router and then recorded in `.codex/INTEGRATION_CONTRACT.md`.
+Implemented endpoints:
+
+```text
+GET  /health
+POST /v1/turn/text
+```
+
+Example text request:
+
+```json
+{
+  "session_id": "demo-1",
+  "text": "Я только что попал в аварию, что делать?"
+}
+```
 
 ## Tests
 
-    py -m pytest backend\tests -q
+```powershell
+py -m pytest backend\tests -q
+```
 
-Do not mark these tests as passing until the command has actually been run on the current commit.
+GitHub PR CI also compiles `backend/app` and runs the backend tests.
+
+## Current text pipeline
+
+```text
+text
+  -> official scenario prompt
+  -> OpenAI structured router
+  -> scenario ID validation
+  -> deterministic confidence/handoff policy
+  -> official scenario/system response opening
+  -> trace with measured router/response/total latency
+```
+
+No scenario executor, STT or TTS is implemented yet. Trace `actions` therefore remains empty.
 
 ## Next backend target
 
-Implement structured OpenAI LLM routing against the official scenario catalog:
-- include `description`, `not_this_if`, examples, priority and relevant dialogue state;
-- request structured output;
-- validate all scenario IDs;
-- measure real router latency;
-- do not hardcode dev utterances.
+After tests and a live API smoke pass:
+1. create dev-set prediction runner;
+2. run official `starter-kit/evaluate.py`;
+3. record real baseline and failure pairs;
+4. iterate router prompt/model only from measured evidence.
