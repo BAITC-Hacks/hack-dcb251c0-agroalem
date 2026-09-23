@@ -1,32 +1,59 @@
 # Tim -> Danil handoff
 
-## 2026-09-23 — shared starter kit integrated; backend foundation started
+## 2026-09-23 — text transport published on tim/backend
 
-Backend branch:
-`tim/backend`
+Backend target:
+structured LLM router + deterministic policy + text turn API.
 
-Incoming Danil work reviewed:
-- commit `1b9e583d6bf8dfcf44c600d30ed11acf2c91d7bf`;
-- official starter kit and non-conflicting shared docs imported into `main`;
-- Danil's larger overlapping documentation remains visible in draft PR #2 for deliberate reconciliation.
+### Frontend can now integrate
 
-Backend now contains:
-- official catalog loader;
-- structured routing/trace schemas;
-- unknown scenario-ID validation;
-- `GET /health`;
-- backend tests (authored, not yet locally executed).
+```text
+POST /v1/turn/text
+```
 
-## Frontend action
-Do not bind customer UI to a guessed turn endpoint yet.
+Request:
 
-Use `.codex/INTEGRATION_CONTRACT.md` as the domain shape. Continue UI work behind an adapter/mock boundary if needed.
+```json
+{
+  "session_id": "frontend-session-id",
+  "text": "customer text"
+}
+```
 
-## Contract status
-- concrete health endpoint: `GET /health`;
-- customer turn endpoint/transport: `UNKNOWN`;
-- STT/TTS endpoints: `UNKNOWN`;
-- real latency: unavailable until measured.
+The exact response and error contract is now in:
 
-## Next backend handoff expected
-After the real LLM router is implemented and tested, Tim will publish the verified turn route/transport and sample real response payload.
+```text
+.codex/INTEGRATION_CONTRACT.md
+```
+
+### Important semantics
+
+- Use backend scenario/confidence/reason/alternatives as returned. Do not recompute them.
+- `actions` is currently empty because backend executor does not exist yet.
+- `stt` and `tts_first_audio` are null for text turns.
+- Backend returns 422 for invalid request, 503 when provider config is missing, 502 for routing/provider failure and 504 for timeout.
+- Current session state is process-memory only.
+- Voice upload/stream endpoint is still UNKNOWN.
+
+### What Danil can build now
+
+- text fallback form;
+- conversation surface;
+- frontend API adapter for `POST /v1/turn/text`;
+- supervisor trace using returned fields;
+- loading/error states for 422/502/503/504;
+- fixture fallback only behind the adapter boundary.
+
+### Do not implement yet
+
+Do not guess:
+- microphone upload endpoint;
+- codec/MIME;
+- streaming;
+- assistant audio URL/blob shape.
+
+Backend will hand those over when STT/TTS path exists.
+
+### Backend verification status
+
+Unit/integration tests are authored and GitHub CI is being enabled. Live OpenAI smoke/evaluation still requires server-side API credentials and must not be reported as passed before it is actually run.
