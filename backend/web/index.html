@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Voice Router · Демонстрация для жюри</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div><p class="eyebrow">HACKALEM / SAQTA · СИНТЕТИЧЕСКИЕ ДАННЫЕ</p><h1>Voice Router</h1></div>
+    <button id="new-session" type="button">Новая сессия</button>
+  </header>
+  <p class="notice">Это ИИ-демонстрация, не настоящая страховая компания. Озвучка создана ИИ. Не вводите реальные ИИН, платёжные данные или медицинские документы.</p>
+  <p id="health" role="status">Проверяем локальный сервер…</p>
+  <main>
+    <section aria-labelledby="conversation-heading">
+      <h2 id="conversation-heading">Диалог</h2>
+      <p class="muted">Русский, қазақша или смешанная речь. Текст работает независимо от микрофона.</p>
+      <div id="history" aria-live="polite"><p class="muted">История пока пуста.</p></div>
+      <form id="composer">
+        <label for="text">Запрос клиента</label>
+        <textarea id="text" rows="3" maxlength="4000" placeholder="Спросите об условиях страховки или адресе офиса…" required></textarea>
+        <div class="controls">
+          <button id="send" type="submit">Отправить текст</button>
+          <button id="microphone" type="button">Записать голос</button>
+          <button id="cancel-recording" type="button" hidden>Не отправлять запись</button>
+          <button id="cancel-request" type="button" hidden>Отменить ожидание</button>
+        </div>
+      </form>
+      <div class="upload">
+        <label for="audio-file">Или загрузить запись (до 20 MiB)</label>
+        <input id="audio-file" type="file" accept="audio/webm,audio/mp4,audio/mpeg,audio/wav,.m4a,.webm,.mp3,.wav,.mp4">
+      </div>
+      <p id="status" class="muted" role="status">Готово к вводу.</p>
+    </section>
+    <section aria-labelledby="trace-heading">
+      <h2 id="trace-heading">Supervisor trace</h2>
+      <p class="muted">Выберите реплику в истории. Неизмеренные значения остаются null; действия не имитируются.</p>
+      <p id="trace-state">После первого запроса появится трассировка.</p>
+      <pre id="trace" aria-label="Данные маршрутизации"></pre>
+    </section>
+  </main>
+  <footer>
+    Демо отвечает по исходной базе знаний и сохраняет до 10 последних ходов в памяти процесса.
+    Выпуск полиса, SMS, запись к врачу и настоящее соединение с оператором не подключены.
+    <a href="/docs" target="_blank" rel="noreferrer">Документация API</a>
+  </footer>
+</body>
+</html>

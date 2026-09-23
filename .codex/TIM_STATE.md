@@ -1,54 +1,53 @@
 # Tim state
 
-Role: backend + integration owner
-Branch: `tim/backend`
-Updated: 2026-09-23 by Tim's integration agent.
+Role: backend and integration owner. Branch: tim/backend.
+Updated: 2026-09-23. Execution environment: isolated Linux container, not either Windows PC.
 
 ## Current objective
-FIRST REAL ROUTING BASELINE, followed by integration with FIRST REAL TEXT E2E UI. Do not tune before measuring the live baseline.
 
-## Last completed goal
-Hardened the existing text milestone in code and executed offline regression checks. No architecture redesign and no model/prompt/threshold tuning.
+Finish the live acceptance gates of the text + OpenAI audio jury demo. Keep routing tuning behind the first measured 104-item baseline. Danil owns the reference-driven visual layout; do not redesign his React UI in parallel.
 
-## Changes in this target
-- Whitespace-only text/session identifiers are rejected by the existing request model; surrounding whitespace is trimmed.
-- Medium-confidence operator handoff no longer also sets clarification=true.
-- Handoff text no longer claims a completed operator transfer: this demo has no operator executor yet.
-- Prediction generation rejects invalid/duplicate input IDs before its provider calls and can checkpoint each successful result.
-- Prediction/report writes are atomic UTF-8 replacements, including nested output directories.
-- Baseline runner records model, Git commit, dataset SHA-256, progress, failure status and the official evaluator output.
-- Partial failures are not labelled a completed baseline. Raw provider exception messages are not written to reports.
-- Baseline --help and missing-key preflight work without importing the OpenAI SDK.
+## Completed code target
 
-## Commands actually run and evidence
-Environment: isolated Linux container, NOT Tim's or Danil's Windows PC.
-Python 3.13.5; pytest 9.0.2; Pydantic 2.13.4.
+- Added OpenAI-only HTTPX REST transport for strict Responses JSON schema, file transcription and MP3 speech. The key stays server-side and the provider origin is fixed to api.openai.com.
+- Added a real read-only answer-generation layer grounded in official knowledge_base.json, accepted scenarios, collected values and the latest ten user+assistant turns. It replaces repeated scenario openings on accepted business routes.
+- Retained original routing prompt and confidence thresholds. The old unverified default model was replaced with documented, configurable gpt-4.1-mini; this is configuration repair, not a measured tuning result.
+- Added rollback/serialization and bounds for process-local session state.
+- Added /v1/audio/transcriptions, /v1/audio/speech and /v1/turn/audio. Failed TTS preserves an already successful text turn. Unknown first-audio timing remains null; full generation time uses tts.
+- Added a functional jury page at / with text, per-turn trace, microphone recording, file upload, MP3 playback, cancellation and explicit AI-voice disclosure.
+- Added root run_mvp.py: local venv/install/server launch, with no Git changes and no secret output. Added .venv to .gitignore.
+- Replaced the root README with actual startup/use/demo/API/testing instructions and explicit limitations.
+- Added transport-only audio helper on Danil's branch; his design/layout files were not edited in this target.
 
-`python -m pytest backend/tests/test_baseline_regressions.py backend/tests/test_policy_transitions_offline.py -q`
-Result: 47 passed in 0.71s.
+## Evidence actually executed
 
-`python -m backend.scripts.run_baseline --help`
-Result: exit 0.
+`python -m pytest backend/tests/test_mvp_runtime.py -q`: 46 passed in 2.00s, using explicit unit fixtures and HTTPX MockTransport.
 
-`python -m backend.scripts.run_baseline --smoke-only`
-Result: exit 2; OPENAI_API_KEY missing. No paid/live request was made.
+`NODE_PATH=/usr/local/slides_js/node_modules node --test frontend/scripts/audio.check.mjs` (run from the appropriate directory): 16 passed, 0 failed; actual TypeScript source transpiled with the environment's compiler and controlled fetch fixtures.
 
-The official evaluate.py bytes were checked against source blob d79287b5ceb6a4ae78be239fd80edd841cbd3d61. Its subprocess wiring was exercised on THREE UNIT-FIXTURE rows, not the official 104-item live baseline.
+Strict standalone TypeScript check of audio.ts: exit 0. `python -m compileall` for changed Python and `node --check backend/web/app.js`: exit 0.
 
-## Verification limits
-- The 47 checks cover the new offline regressions, not the complete repository pytest suite.
-- No usable OpenAI SDK, provider credentials, or outbound package-install network is available in this execution container.
-- No successful live smoke, official 104 live predictions, measured routing accuracy, or browser-to-live-backend E2E is claimed.
-- The earlier path suspicion was checked: parents[2] correctly points to repository root and was not changed.
+Chromium/Playwright navigation to the temporary local test server failed with ERR_BLOCKED_BY_ADMINISTRATOR. Zero browser E2E checks were completed. Browser policy was not changed; the temporary server was stopped.
 
-## Evaluation baseline
-NOT MEASURED. Current model remains the existing configured model; no tuning performed.
+## Unverified and not claimed
 
-## API contract status
-POST /v1/turn/text is unchanged in shape. Text/session whitespace is normalized before length validation. No voice endpoint added. trace.actions remains empty until real execution exists.
+- No live OpenAI calls were made; no OPENAI_API_KEY was present here.
+- No 104-item baseline, STT/TTS quality score or live latency benchmark exists from this session.
+- The 46 new server tests are not the entire repository suite. Legacy API test doubles were updated for the grounded-answer dependency, but the full suite against the complete official files still needs an authorized clone.
+- Full frontend pnpm install/check/build was not executed; no lockfile was invented.
+- No local Windows files or private ignored .env files were inspected or changed.
+- No additional AI agents or remote-desktop sessions were launched; the relevant integrations are not connected.
 
-## Last synced commit
-`ebc958ec4a1d1a17c078414d8b2fe7c7c6c88caa`
+## Deliberate MVP boundary
 
-## Next exact target action
-On an authorized workstation with the ignored .env.local configured: inspect dirty files, fetch the role branch without discarding local work, install declared dependencies, run the COMPLETE `python -m pytest backend/tests -q`, then run `python -m backend.scripts.run_baseline`. Record actual smoke, 104-item metrics, model and failure cases before tuning. Keep PR #3 draft until this evidence exists.
+Read-only insurance consultation and scenario routing only. No actual policy/claim mutations, SMS, appointment execution, operator connection or complete confirmation executor. actions stays []. README must not claim otherwise. No public-production deployment, authentication or durable multi-worker state.
+
+## Synced inputs
+
+Backend base: ce761bd4ce356db4ae1d074fde806be6f9ebb692.
+Frontend base inspected: 723a88189d4529c981bf28dabe54ec1ebd0703c4.
+Actual code commit for this entry is the commit containing this file; resolve with `git log -1 -- .codex/TIM_STATE.md` rather than inventing a self-referential SHA.
+
+## Next exact gate
+
+On a full authorized checkout with the ignored OpenAI key configured: run `py run_mvp.py --check`, then `.venv\Scripts\python.exe -m backend.scripts.run_baseline`. Record actual model, source SHA, metrics and failures. Start `py run_mvp.py`; verify one successful and one failed browser text request, one microphone request and speech playback. Resolve integration conflicts only with these results visible. Do not claim main/release readiness from a fixture test or mergeable PR alone.
