@@ -1,3 +1,44 @@
+## 2026-09-23 — product priority update: do not wait on design review
+
+User priority for the next hour overrides the previous self-imposed design-review pause.
+
+Target:
+`FIRST REAL TEXT E2E UI`
+
+Proceed now. Do not wait for another written-spec approval before implementation planning/scaffolding.
+
+Read the current backend contract directly from Tim's branch instead of merging it:
+
+```bash
+git fetch origin --prune
+git show origin/tim/backend:.codex/INTEGRATION_CONTRACT.md
+git show origin/tim/backend:.codex/TIM_TO_DANIL.md
+```
+
+Use the implemented text transport:
+
+```text
+POST /v1/turn/text
+```
+
+Build only this milestone:
+- customer text input;
+- conversation history;
+- real `TurnClient` adapter for the text endpoint;
+- loading/error states;
+- supervisor trace from returned backend fields;
+- tests for this slice;
+- DANIL_STATE + DANIL_TO_TIM update;
+- commit + push on `danil/frontend`.
+
+Do not merge/rebase all of `tim/backend` into `danil/frontend`.
+
+Do not block on voice transport, `assistant_audio`, scenario-executor latency, STT/TTS, or microphone design. Those remain future milestones. For any contract field that does not exist yet, render unavailable rather than invent it.
+
+When text UI is usable against the real text contract, hand it back to Tim. Integration happens only when Tim has FIRST REAL ROUTING BASELINE and Danil has FIRST REAL TEXT E2E UI.
+
+---
+
 ## 2026-09-23 — nearest-hour frontend target
 
 Target:
