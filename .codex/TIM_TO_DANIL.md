@@ -1,145 +1,22 @@
-## 2026-09-23 — frontend text code now exists
-
-Danil branch now contains the text milestone implementation:
-- scaffold commit `5ef09a3cb4d6fec4a5b3f37a3a40a97581471bab`;
-- text UI commit `ce7c0e6a3f81192aed5b8e5f891d4f830d56efc8`;
-- final handoff/config commit `e2fd9419937c28ec30663af8a11f9cca9cbde29a`.
-
-Backend action:
-- no contract change required;
-- wait for Danil local `pnpm install && pnpm check` and one real browser -> backend text turn;
-- do not merge the diverged frontend PR until this evidence and Tim's routing baseline are both recorded.
-
----
-
-## 2026-09-23 — product priority update: do not wait on design review
-
-User priority for the next hour overrides the previous self-imposed design-review pause.
-
-Target:
-`FIRST REAL TEXT E2E UI`
-
-Proceed now. Do not wait for another written-spec approval before implementation planning/scaffolding.
-
-Read the current backend contract directly from Tim's branch instead of merging it:
-
-```bash
-git fetch origin --prune
-git show origin/tim/backend:.codex/INTEGRATION_CONTRACT.md
-git show origin/tim/backend:.codex/TIM_TO_DANIL.md
-```
-
-Use the implemented text transport:
-
-```text
-POST /v1/turn/text
-```
-
-Build only this milestone:
-- customer text input;
-- conversation history;
-- real `TurnClient` adapter for the text endpoint;
-- loading/error states;
-- supervisor trace from returned backend fields;
-- tests for this slice;
-- DANIL_STATE + DANIL_TO_TIM update;
-- commit + push on `danil/frontend`.
-
-Do not merge/rebase all of `tim/backend` into `danil/frontend`.
-
-Do not block on voice transport, `assistant_audio`, scenario-executor latency, STT/TTS, or microphone design. Those remain future milestones. For any contract field that does not exist yet, render unavailable rather than invent it.
-
-When text UI is usable against the real text contract, hand it back to Tim. Integration happens only when Tim has FIRST REAL ROUTING BASELINE and Danil has FIRST REAL TEXT E2E UI.
-
----
-
-## 2026-09-23 — nearest-hour frontend target
-
-Target:
-`FIRST REAL TEXT E2E UI`
-
-Work only on `danil/frontend`.
-
-Do NOT merge or rebase the whole `tim/backend` branch into Danil's branch merely to stay current. The backend PR is independently progressing and the two branches are intentionally parallel until the text milestone is usable.
-
-Read the current backend contract directly from `origin/tim/backend` when needed:
-
-```bash
-git fetch origin --prune
-git show origin/tim/backend:.codex/INTEGRATION_CONTRACT.md
-git show origin/tim/backend:.codex/TIM_TO_DANIL.md
-```
-
-Frontend milestone scope:
-1. customer text input;
-2. conversation history/surface;
-3. adapter for `POST /v1/turn/text`;
-4. loading + 422/502/503/504 error states;
-5. supervisor trace rendering from the real contract;
-6. no microphone/voice transport guessing yet;
-7. update `DANIL_STATE.md` + `DANIL_TO_TIM.md`;
-8. commit + push on `danil/frontend`.
-
-When this text UI is real and Tim has FIRST REAL ROUTING BASELINE, integrate the text milestone deliberately. Do not synchronize branches every few minutes.
-
----
-
 # Tim -> Danil handoff
 
-## 2026-09-23 — text transport published on tim/backend
+## 2026-09-23: finish text milestone, not more architecture
 
-Backend target:
-structured LLM router + deterministic policy + text turn API.
+The integration agent has prepared fixes for both role branches under the user's explicit request. This is not a report of commands executed on Danil's computer.
 
-### Frontend can now integrate
+Backend transport stays `POST /v1/turn/text` with the existing domain response. Whitespace-only input now returns validation failure. Handoff indicates that an operator is needed, not that a connection has actually completed. No STT/TTS/executor endpoint was added.
 
-```text
-POST /v1/turn/text
-```
+Frontend target remains FIRST REAL TEXT E2E UI:
+- isolate each request and selected trace;
+- do not display an old successful trace for a pending/failed request;
+- handle HTTP/network/JSON errors, timeout and cancellation honestly;
+- display returned slots/actions and null timings without inventing values;
+- do not select scenarios in browser code.
 
-Request:
+Read backend contract from origin/tim/backend without merging the whole backend branch into danil/frontend. Before pulling, inspect local changes; never reset, discard, or force-push to make the trees match.
 
-```json
-{
-  "session_id": "frontend-session-id",
-  "text": "customer text"
-}
-```
+Verification: backend's new offline regression group passed 47 checks. This is not the whole backend suite and is not a live baseline. Frontend transport/trace-selection checks are separately recorded in DANIL_STATE. React build and browser/live API verification remain pending.
 
-The exact response and error contract is now in:
+Next on Danil's workstation: install frontend dependencies, run `pnpm check` (now includes `pnpm test:transport`), commit the real generated lockfile, start the UI with the real backend available, exercise a successful and failed text turn, record the exact evidence and push. Do not switch to voice or redesign the UI before this gate is met.
 
-```text
-.codex/INTEGRATION_CONTRACT.md
-```
-
-### Important semantics
-
-- Use backend scenario/confidence/reason/alternatives as returned. Do not recompute them.
-- `actions` is currently empty because backend executor does not exist yet.
-- `stt` and `tts_first_audio` are null for text turns.
-- Backend returns 422 for invalid request, 503 when provider config is missing, 502 for routing/provider failure and 504 for timeout.
-- Current session state is process-memory only.
-- Voice upload/stream endpoint is still UNKNOWN.
-
-### What Danil can build now
-
-- text fallback form;
-- conversation surface;
-- frontend API adapter for `POST /v1/turn/text`;
-- supervisor trace using returned fields;
-- loading/error states for 422/502/503/504;
-- fixture fallback only behind the adapter boundary.
-
-### Do not implement yet
-
-Do not guess:
-- microphone upload endpoint;
-- codec/MIME;
-- streaming;
-- assistant audio URL/blob shape.
-
-Backend will hand those over when STT/TTS path exists.
-
-### Backend verification status
-
-Unit/integration tests are authored and GitHub CI is being enabled. Live OpenAI smoke/evaluation still requires server-side API credentials and must not be reported as passed before it is actually run.
+Live baseline requires server-side credentials and a working terminal on Tim's authorized PC. Keep keys in the ignored .env.local, never in Git or frontend variables.

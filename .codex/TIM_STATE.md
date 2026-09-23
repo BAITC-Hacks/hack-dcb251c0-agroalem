@@ -2,161 +2,53 @@
 
 Role: backend + integration owner
 Branch: `tim/backend`
+Updated: 2026-09-23 by Tim's integration agent.
 
 ## Current objective
+FIRST REAL ROUTING BASELINE, followed by integration with FIRST REAL TEXT E2E UI. Do not tune before measuring the live baseline.
 
-Run local pytest + one-command live baseline and record FIRST REAL ROUTING BASELINE. Do not tune before the baseline exists.
+## Last completed goal
+Hardened the existing text milestone in code and executed offline regression checks. No architecture redesign and no model/prompt/threshold tuning.
 
-## Last completed engineering work
+## Changes in this target
+- Whitespace-only text/session identifiers are rejected by the existing request model; surrounding whitespace is trimmed.
+- Medium-confidence operator handoff no longer also sets clarification=true.
+- Handoff text no longer claims a completed operator transfer: this demo has no operator executor yet.
+- Prediction generation rejects invalid/duplicate input IDs before its provider calls and can checkpoint each successful result.
+- Prediction/report writes are atomic UTF-8 replacements, including nested output directories.
+- Baseline runner records model, Git commit, dataset SHA-256, progress, failure status and the official evaluator output.
+- Partial failures are not labelled a completed baseline. Raw provider exception messages are not written to reports.
+- Baseline --help and missing-key preflight work without importing the OpenAI SDK.
 
-Implemented the first text routing vertical slice in code:
+## Commands actually run and evidence
+Environment: isolated Linux container, NOT Tim's or Danil's Windows PC.
+Python 3.13.5; pytest 9.0.2; Pydantic 2.13.4.
 
-```text
-text
--> official scenario catalog/context
--> OpenAI Responses API structured output
--> official scenario-ID validation
--> deterministic confidence/handoff policy
--> process-memory session state
--> text response
--> trace
-```
+`python -m pytest backend/tests/test_baseline_regressions.py backend/tests/test_policy_transitions_offline.py -q`
+Result: 47 passed in 0.71s.
 
-Published concrete text transport:
+`python -m backend.scripts.run_baseline --help`
+Result: exit 0.
 
-```text
-POST /v1/turn/text
-```
+`python -m backend.scripts.run_baseline --smoke-only`
+Result: exit 2; OPENAI_API_KEY missing. No paid/live request was made.
 
-## Verified repository facts
+The official evaluate.py bytes were checked against source blob d79287b5ceb6a4ae78be239fd80edd841cbd3d61. Its subprocess wiring was exercised on THREE UNIT-FIXTURE rows, not the official 104-item live baseline.
 
-- Official starter kit is present in shared `main`.
-- 40 business scenarios + 3 system intents are the routing catalog.
-- Danil completed frontend Phase 0 in commit `3998d9da01719f8d17431a262952779d384010fb`.
-- Danil reports no frontend application/framework yet and requested a real text/audio transport contract.
-- Text transport is now defined; voice transport remains UNKNOWN.
-- Initial backend stack is Python + FastAPI + Pydantic + OpenAI SDK + pytest.
-- Current OpenAI structured-output implementation uses `client.responses.parse(..., text_format=...)`.
-- Initial router model default is `gpt-5.6-luna`, overridable by `OPENAI_ROUTER_MODEL`.
+## Verification limits
+- The 47 checks cover the new offline regressions, not the complete repository pytest suite.
+- No usable OpenAI SDK, provider credentials, or outbound package-install network is available in this execution container.
+- No successful live smoke, official 104 live predictions, measured routing accuracy, or browser-to-live-backend E2E is claimed.
+- The earlier path suspicion was checked: parents[2] correctly points to repository root and was not changed.
 
-## Latest backend acceleration
-
-- Commit `2f2047116b74a0b7bc50c38361ad61ced651318d` adds local `.env.local` loading and a one-command baseline runner.
-- `py -m backend.scripts.run_baseline --smoke-only` performs live RU + KK + mixed smoke.
-- `py -m backend.scripts.run_baseline` performs the same smoke, generates all 104 predictions, runs official `evaluate.py`, and writes `baseline-report.txt`.
-- Local prediction/report artifacts are ignored by Git.
-
-## Backend components present in code
-
-- official catalog loader;
-- strict LLM structured-output schema;
-- normalized domain router schema;
-- unknown scenario-ID rejection;
-- prompt built from official `description`, `not_this_if`, examples, priority, slots, actions, confirmation and handoff metadata;
-- confidence policy;
-- low-confidence streak;
-- explicit operator handoff;
-- up-to-10-item session routing history;
-- FastAPI `GET /health`;
-- FastAPI `POST /v1/turn/text`;
-- measured router/response/total timings;
-- tests for catalog, validation, router normalization, policy, API and evaluation mapping;
-- official dev-set prediction runner (`python -m backend.scripts.generate_predictions`);
-- GitHub backend test workflow.
-
-## Safety/trace decisions
-
-- No configured scenario action is reported as executed; `trace.actions=[]` until executor exists.
-- Unknown STT/TTS timings remain null.
-- API credentials are server-side environment only.
-- Clarification text may come from the router as a short customer-facing question, while reason remains concise operational trace and not chain-of-thought.
-
-## Immediate execution sequence
-
-1. Fix confidence streak bug. ✅
-2. Run pytest locally.
-3. Commit + push.
-4. Run 3 live LLM smoke utterances.
-5. Generate all 104 predictions.
-6. Run official `evaluate.py`.
-7. Record baseline.
-8. Only then tune router/model/prompt.
-
-Nearest-hour success criterion:
-- Tim/backend: `FIRST REAL ROUTING BASELINE`.
-- Danil/frontend: `FIRST REAL TEXT E2E UI`.
-- Integrate only when both text milestones exist.
-
-## Test/evidence status
-
-Already verified from Danil bootstrap:
-- starter-kit reference validation;
-- `python -m py_compile starter-kit/evaluate.py`.
-
-For current backend target:
-- confidence streak bug is fixed: only consecutive `<0.45` turns advance handoff streak; medium/high confidence resets it;
-- isolated regression pytest harness for decision policy passed: `7 passed in 0.07s`;
-- this isolated harness is NOT a substitute for full repository pytest;
-- full repository pytest is still pending on Tim's Windows environment because this execution environment lacks the real OpenAI SDK and cannot install it from the network;
-- GitHub Actions jobs currently receive no runner (`runner_id=0`, zero steps), so they do not constitute a code test result;
-- no live OpenAI request has yet been claimed as successful;
-- no evaluation baseline has yet been measured.
+## Evaluation baseline
+NOT MEASURED. Current model remains the existing configured model; no tuning performed.
 
 ## API contract status
+POST /v1/turn/text is unchanged in shape. Text/session whitespace is normalized before length validation. No voice endpoint added. trace.actions remains empty until real execution exists.
 
-Implemented text route:
-- `POST /v1/turn/text`.
-
-Documented errors:
-- 422 validation;
-- 503 provider not configured;
-- 502 provider/structured-output failure;
-- 504 provider timeout.
-
-Voice/STT/TTS transport remains UNKNOWN.
-
-## Open blockers
-
-- GitHub Actions PR job is being queued but prior run received no runner (`runner_id=0`, zero steps), so CI infrastructure may be restricted by the organizer repository settings.
-- Live LLM smoke/evaluation requires a valid server-side `OPENAI_API_KEY`.
-- Danil branch remains diverged from main; his Phase 0 work is visible in draft PR #2 and must not be overwritten.
-- Current session state is in-memory and not production durable.
-
-## Decisions made
-
-- Initial router model default: `gpt-5.6-luna`, with env override.
-- Use current OpenAI Responses structured parsing rather than free-form JSON parsing.
-- Implement text E2E before voice.
-- Publish concrete transport only after route exists in code.
-- Keep executor actions out of trace until actually proposed/executed.
-
-## Commands/evidence actually performed through GitHub in this target
-
-- Read mandatory startup/state/contract files.
-- Read current Tim/Danil branch deltas.
-- Read Danil fresh Phase 0 commit and handoff.
-- Checked current official OpenAI SDK structured-output usage.
-- Added router/policy/session/API/test/CI code to `tim/backend`.
-- Added backend CI workflow to shared `main`.
-
-## Last known shared main
-
-Shared main advanced with backend CI workflow after the previous starter-kit sync.
+## Last synced commit
+`ebc958ec4a1d1a17c078414d8b2fe7c7c6c88caa`
 
 ## Next exact target action
-
-On Tim PC, from repository root:
-
-```powershell
-git fetch origin --prune
-git switch tim/backend
-git pull --ff-only origin tim/backend
-py -m venv .venv
-.venv\\Scripts\\activate
-py -m pip install -r backend\\requirements.txt
-py -m pytest backend\\tests -q
-py -m backend.scripts.run_baseline --smoke-only
-py -m backend.scripts.run_baseline
-```
-
-Then copy the measured model ID, pytest result, official metrics and main failure pairs from `baseline-report.txt` into this state file. Only after that begin tuning.
+On an authorized workstation with the ignored .env.local configured: inspect dirty files, fetch the role branch without discarding local work, install declared dependencies, run the COMPLETE `python -m pytest backend/tests -q`, then run `python -m backend.scripts.run_baseline`. Record actual smoke, 104-item metrics, model and failure cases before tuning. Keep PR #3 draft until this evidence exists.

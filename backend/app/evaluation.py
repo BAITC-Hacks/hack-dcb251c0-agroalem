@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -63,21 +66,61 @@ def prediction_ids(result: RouterOutput) -> list[str]:
 def generate_predictions(
     router: RouterLike,
     utterances: list[dict[str, Any]],
+    *,
+    checkpoint_path: Path | None = None,
+    progress: Callable[[int, int, str], None] | None = None,
 ) -> dict[str, list[str]]:
+    # Validate the whole input before making any billable provider call.
+    seen: set[str] = set()
+    for item in utterances:
+        identifier, text = item.get("id"), item.get("text")
+        if not isinstance(identifier, str) or not identifier.strip():
+            raise ValueError("Every utterance needs a non-empty string id")
+        if identifier in seen:
+            raise ValueError(f"Duplicate utterance id: {identifier}")
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError(f"Empty utterance text: {identifier}")
+        seen.add(identifier)
+
     predictions: dict[str, list[str]] = {}
     for item in utterances:
-        utterance_id = item["id"]
-        text = item["text"]
-        result, _ = router.route(text=text)
-        predictions[utterance_id] = prediction_ids(result)
+        # Gold labels and language labels are NOT supplied to the router.
+        result, _ = router.route(text=item["text"])
+        predictions[item["id"]] = prediction_ids(result)
+        if checkpoint_path is not None:
+            write_predictions(predictions, checkpoint_path)
+        if progress is not None:
+            progress(len(predictions), len(utterances), item["id"])
     return predictions
+
+
+def write_text_atomic(output_path: Path, text: str) -> None:
+    """Replace a complete UTF-8 file, including on Windows, without truncation."""
+    output_path = output_path.expanduser().resolve()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", newline="\n",
+            dir=output_path.parent, prefix=f".{output_path.name}.",
+            suffix=".tmp", delete=False,
+        ) as handle:
+            temporary = handle.name
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, output_path)
+        temporary = None
+    finally:
+        if temporary is not None:
+            Path(temporary).unlink(missing_ok=True)
 
 
 def write_predictions(
     predictions: dict[str, list[str]],
     output_path: Path,
 ) -> None:
-    output_path.write_text(
+    write_text_atomic(
+        output_path,
         json.dumps(predictions, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )

@@ -13,3 +13,7 @@ __pycache__/
 predictions*.json
 smoke_predictions*.json
 baseline-report*.txt
+
+# Local Python environments are never source files
+.venv/
+.venv-*/

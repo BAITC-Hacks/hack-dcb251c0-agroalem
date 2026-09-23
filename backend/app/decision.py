@@ -74,7 +74,7 @@ def apply_decision_policy(
         state.low_confidence_streak = 0
         return PolicyResult(
             primary,
-            needs_clarification=True,
+            needs_clarification=not always_handoff,
             handoff=always_handoff,
             requires_confirmation=False,
         )
@@ -95,15 +95,12 @@ def build_assistant_text(
     language = result.language if result.language in {"ru", "kk"} else "ru"
 
     if policy.handoff:
-        if policy.primary and policy.primary.scenario_id in catalog.scenarios:
-            scenario = catalog.scenarios[policy.primary.scenario_id]
-            opening = scenario.get("responses", {}).get(language, {}).get("opening")
-            if opening:
-                return opening
+        # The executor/operator integration is not implemented yet. Do not
+        # claim a successful transfer or return a business-scenario opening.
         return (
-            "Передаю обращение оператору вместе с контекстом."
+            "Для продолжения нужен оператор. Автоматическое соединение в этом демо ещё не подключено."
             if language == "ru"
-            else "Өтінішті контекстімен бірге операторға жіберемін."
+            else "Жалғастыру үшін оператор қажет. Бұл демода автоматты қосылу әлі іске қосылмаған."
         )
 
     if policy.needs_clarification:

@@ -62,6 +62,12 @@ class TextTurnRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=128)
     text: str = Field(min_length=1, max_length=4000)
 
+    @field_validator("session_id", "text", mode="before")
+    @classmethod
+    def strip_input(cls, value: Any) -> Any:
+        # Validate lengths after trimming. A whitespace-only turn is not input.
+        return value.strip() if isinstance(value, str) else value
+
 
 class LatencyTrace(BaseModel):
     stt: float | None = Field(default=None, ge=0)
