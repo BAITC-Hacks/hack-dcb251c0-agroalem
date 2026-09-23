@@ -19,12 +19,31 @@ class AlternativeDecision(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
+class ExtractedSlot(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    value: str = Field(max_length=500)
+
+
+class RouterModelOutput(BaseModel):
+    """Strict shape parsed directly from the LLM."""
+
+    scenarios: list[ScenarioDecision] = Field(default_factory=list)
+    alternatives: list[AlternativeDecision] = Field(default_factory=list)
+    language: Language
+    slots: list[ExtractedSlot] = Field(default_factory=list)
+    is_continuation: bool = False
+    clarification_question: str | None = Field(default=None, max_length=300)
+
+
 class RouterOutput(BaseModel):
+    """Normalized domain shape consumed by policy/API layers."""
+
     scenarios: list[ScenarioDecision] = Field(default_factory=list)
     alternatives: list[AlternativeDecision] = Field(default_factory=list)
     language: Language
     slots: dict[str, Any] = Field(default_factory=dict)
     is_continuation: bool = False
+    clarification_question: str | None = Field(default=None, max_length=300)
 
     @field_validator("scenarios")
     @classmethod
