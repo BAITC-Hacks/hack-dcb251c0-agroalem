@@ -1,0 +1,108 @@
+.panel {
+  min-height: 100%;
+  padding: 28px;
+  border: 1px solid #26303b;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(82, 118, 255, 0.11), transparent 38%),
+    #111820;
+}
+
+.header,
+.scenarioTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h2,
+.panel h2 {
+  margin: 4px 0 0;
+  font-size: 22px;
+}
+
+.eyebrow,
+.label {
+  color: #82a0ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.language {
+  padding: 6px 10px;
+  border: 1px solid #344258;
+  border-radius: 999px;
+  color: #c9d4e6;
+  font-size: 12px;
+}
+
+.block {
+  margin-top: 24px;
+}
+
+.block p {
+  margin: 8px 0 0;
+  line-height: 1.55;
+}
+
+.muted {
+  color: #8f9aaa;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.scenario {
+  padding: 14px;
+  border: 1px solid #293646;
+  border-radius: 14px;
+  background: #0d131a;
+}
+
+.scenario p {
+  color: #aeb9c8;
+  font-size: 13px;
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.flags span {
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: #18212b;
+  color: #aeb9c8;
+  font-size: 12px;
+}
+
+.latencyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #0d131a;
+  color: #9aa7b8;
+  font-size: 12px;
+}
+
+.metric strong {
+  color: #f1f5fb;
+}
