@@ -40,11 +40,14 @@ def apply_decision_policy(
         return PolicyResult(primary, False, False, False)
 
     if primary.scenario_id == "SYS_UNCLEAR":
-        state.low_confidence_streak += 1
+        # SYS_UNCLEAR means clarify, but it is not evidence of a <0.45
+        # confidence turn. The handoff rule is specifically two low
+        # confidence turns in a row.
+        state.low_confidence_streak = 0
         return PolicyResult(
             primary,
-            needs_clarification=state.low_confidence_streak < 2,
-            handoff=state.low_confidence_streak >= 2,
+            needs_clarification=True,
+            handoff=False,
             requires_confirmation=False,
         )
 
@@ -63,6 +66,17 @@ def apply_decision_policy(
             needs_clarification=False,
             handoff=always_handoff,
             requires_confirmation=bool(scenario.get("requires_confirmation")),
+        )
+
+    if primary.confidence >= LOW_CONFIDENCE:
+        # Medium confidence breaks a low-confidence streak. Clarify,
+        # but do not move the conversation closer to operator handoff.
+        state.low_confidence_streak = 0
+        return PolicyResult(
+            primary,
+            needs_clarification=True,
+            handoff=always_handoff,
+            requires_confirmation=False,
         )
 
     state.low_confidence_streak += 1
