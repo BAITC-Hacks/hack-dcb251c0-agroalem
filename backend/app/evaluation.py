@@ -9,6 +9,7 @@ from .schemas import RouterOutput
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV_UTTERANCES_PATH = ROOT / "starter-kit" / "dev_utterances.json"
+SMOKE_LANGUAGES = ("ru", "kk", "mixed")
 
 
 class RouterLike(Protocol):
@@ -27,6 +28,18 @@ def load_dev_utterances(path: Path = DEV_UTTERANCES_PATH) -> list[dict[str, Any]
     if not isinstance(utterances, list):
         raise ValueError("dev_utterances.json must contain an utterances list")
     return utterances
+
+
+def select_smoke_utterances(
+    utterances: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    for language in SMOKE_LANGUAGES:
+        item = next((row for row in utterances if row.get("lang") == language), None)
+        if item is None:
+            raise ValueError(f"No smoke utterance for language: {language}")
+        selected.append(item)
+    return selected
 
 
 def prediction_ids(result: RouterOutput) -> list[str]:
