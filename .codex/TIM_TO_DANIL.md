@@ -1,3 +1,17 @@
+## 2026-09-23 — frontend text code now exists
+
+Danil branch now contains the text milestone implementation:
+- scaffold commit `5ef09a3cb4d6fec4a5b3f37a3a40a97581471bab`;
+- text UI commit `ce7c0e6a3f81192aed5b8e5f891d4f830d56efc8`;
+- final handoff/config commit `e2fd9419937c28ec30663af8a11f9cca9cbde29a`.
+
+Backend action:
+- no contract change required;
+- wait for Danil local `pnpm install && pnpm check` and one real browser -> backend text turn;
+- do not merge the diverged frontend PR until this evidence and Tim's routing baseline are both recorded.
+
+---
+
 ## 2026-09-23 — product priority update: do not wait on design review
 
 User priority for the next hour overrides the previous self-imposed design-review pause.

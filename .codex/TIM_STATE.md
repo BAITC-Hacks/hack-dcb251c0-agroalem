@@ -5,7 +5,7 @@ Branch: `tim/backend`
 
 ## Current objective
 
-Produce FIRST REAL ROUTING BASELINE. Do not tune before the baseline exists.
+Run local pytest + one-command live baseline and record FIRST REAL ROUTING BASELINE. Do not tune before the baseline exists.
 
 ## Last completed engineering work
 
@@ -38,6 +38,13 @@ POST /v1/turn/text
 - Initial backend stack is Python + FastAPI + Pydantic + OpenAI SDK + pytest.
 - Current OpenAI structured-output implementation uses `client.responses.parse(..., text_format=...)`.
 - Initial router model default is `gpt-5.6-luna`, overridable by `OPENAI_ROUTER_MODEL`.
+
+## Latest backend acceleration
+
+- Commit `2f2047116b74a0b7bc50c38361ad61ced651318d` adds local `.env.local` loading and a one-command baseline runner.
+- `py -m backend.scripts.run_baseline --smoke-only` performs live RU + KK + mixed smoke.
+- `py -m backend.scripts.run_baseline` performs the same smoke, generates all 104 predictions, runs official `evaluate.py`, and writes `baseline-report.txt`.
+- Local prediction/report artifacts are ignored by Git.
 
 ## Backend components present in code
 
@@ -138,10 +145,18 @@ Shared main advanced with backend CI workflow after the previous starter-kit syn
 
 ## Next exact target action
 
-1. On Tim PC run `py -m pytest backend\\tests -q`.
-2. Commit/push only if the local branch has additional unpushed changes; GitHub branch already contains the streak fix.
-3. With server-side credentials run `py -m backend.scripts.generate_predictions --limit 3 --output smoke_predictions.json`.
-4. If all 3 live routes are valid, run `py -m backend.scripts.generate_predictions --output predictions.json` for all 104.
-5. Run `py starter-kit\\evaluate.py predictions.json starter-kit\\dev_utterances.json`.
-6. Record exact model ID, commands, primary accuracy, full match, multi-intent recall, language/type breakdown and failure pairs.
-7. Only after that begin tuning.
+On Tim PC, from repository root:
+
+```powershell
+git fetch origin --prune
+git switch tim/backend
+git pull --ff-only origin tim/backend
+py -m venv .venv
+.venv\\Scripts\\activate
+py -m pip install -r backend\\requirements.txt
+py -m pytest backend\\tests -q
+py -m backend.scripts.run_baseline --smoke-only
+py -m backend.scripts.run_baseline
+```
+
+Then copy the measured model ID, pytest result, official metrics and main failure pairs from `baseline-report.txt` into this state file. Only after that begin tuning.

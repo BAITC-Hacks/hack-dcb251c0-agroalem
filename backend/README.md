@@ -123,3 +123,22 @@ The prediction runner:
 - preserves model-returned multi-intent order;
 - maps uncertain business routes below the 0.75 policy threshold to `SYS_UNCLEAR`;
 - keeps explicit system intents unchanged.
+
+
+## Fast baseline command
+
+After dependencies and `OPENAI_API_KEY` are available (the backend also loads ignored root `.env.local` automatically):
+
+```powershell
+py -m backend.scripts.run_baseline --smoke-only
+py -m backend.scripts.run_baseline
+```
+
+The first command performs one live structured route for each language bucket: RU, KK and mixed.  
+The second runs the same smoke, generates all 104 official dev predictions and invokes the official evaluator.
+
+Output files are local-only and ignored by Git:
+- `predictions.json`
+- `baseline-report.txt`
+
+Record the actual metrics in `.codex/TIM_STATE.md` before any prompt/model tuning.
