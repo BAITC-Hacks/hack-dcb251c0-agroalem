@@ -1,3 +1,34 @@
+## 2026-09-23 — nearest-hour frontend target
+
+Target:
+`FIRST REAL TEXT E2E UI`
+
+Work only on `danil/frontend`.
+
+Do NOT merge or rebase the whole `tim/backend` branch into Danil's branch merely to stay current. The backend PR is independently progressing and the two branches are intentionally parallel until the text milestone is usable.
+
+Read the current backend contract directly from `origin/tim/backend` when needed:
+
+```bash
+git fetch origin --prune
+git show origin/tim/backend:.codex/INTEGRATION_CONTRACT.md
+git show origin/tim/backend:.codex/TIM_TO_DANIL.md
+```
+
+Frontend milestone scope:
+1. customer text input;
+2. conversation history/surface;
+3. adapter for `POST /v1/turn/text`;
+4. loading + 422/502/503/504 error states;
+5. supervisor trace rendering from the real contract;
+6. no microphone/voice transport guessing yet;
+7. update `DANIL_STATE.md` + `DANIL_TO_TIM.md`;
+8. commit + push on `danil/frontend`.
+
+When this text UI is real and Tim has FIRST REAL ROUTING BASELINE, integrate the text milestone deliberately. Do not synchronize branches every few minutes.
+
+---
+
 # Tim -> Danil handoff
 
 ## 2026-09-23 — text transport published on tim/backend
