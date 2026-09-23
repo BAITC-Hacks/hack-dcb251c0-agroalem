@@ -4,14 +4,14 @@
 
 - [x] Inspect official starter-kit README and schemas.
 - [x] Verify all original 40 scenarios load correctly.
-- [ ] Implement browser microphone capture.
+- [x] Implement browser microphone capture. (Danil: MediaRecorder permission/stop/cancel/cleanup; Chromium automated checks. Physical-device acceptance remains below.)
 - [ ] Implement STT adapter.
 - [ ] Implement LLM router with structured output.
 - [ ] Validate returned scenario IDs.
 - [ ] Build conversation state for multi-turn context.
 - [ ] Implement scenario execution against official KB/mock backend.
 - [ ] Implement response generation.
-- [ ] Implement TTS/audio playback.
+- [x] Implement TTS/audio playback. (Danil: published AudioApiClient + React MP3 player, TTS-only retry; live synthetic RU browser/API smoke passed against Tim 95eca20. Other languages still pending.)
 - [x] Implement text fallback. (Danil: verified local browser-to-backend text path.)
 - [x] Implement supervisor trace panel. (Danil: per-turn text trace.)
 - [x] Show scenario + short rationale + alternatives after every turn. (Danil: each successful text response; failed turns show unavailable trace.)

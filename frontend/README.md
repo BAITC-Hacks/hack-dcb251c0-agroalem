@@ -84,7 +84,7 @@ Do not remove a developer's saved credential file to run this check. Both live t
 
 ## Current milestone
 
-Implemented and verified text-only E2E UI:
+Implemented text and voice UI (live provider evidence is recorded separately below):
 
 - stable-session text input and conversation history;
 - real `HttpTurnClient` for Tim's `POST /v1/turn/text`;
@@ -100,6 +100,20 @@ Implemented and verified text-only E2E UI:
 - desktop side-by-side surfaces and mobile conversation/trace scrolling above a pinned, non-overlay composer;
 - empty/whitespace send lockout and large-text responsive layout.
 
-Tim has now published audio contract v0.2 in `origin/tim/backend`. The supplied `AudioApiClient` is transport-only; recording and assistant playback are not connected to the React UI yet. Run its isolated test-response checks with `node --test scripts/audio.check.mjs`. The prior live text evidence does not verify the new audio/grounded-answer backend.
+The microphone button now requests browser permission on click. Record up to 60 seconds, then choose **Остановить и отправить**, or cancel without sending. Browser MediaRecorder selects WebM/Opus or MP4; unsupported browsers and permission errors retain text fallback. The microphone is released after stop/cancel/error/unmount, including a delayed permission response.
+
+Audio uses Tim's published v0.2 contract through `AudioApiClient`: `/v1/turn/audio` shares the text session, validates the returned trace, and attaches transcript/answer/MP3 to its own exchange. Native audio controls play only on request, with an AI-voice disclosure. If TTS fails, the completed text and trace remain; **Повторить озвучку** sends only `/v1/audio/speech`. Text replies can also be explicitly synthesized. Cancellation stops waiting, not necessarily server execution.
+
+Microphone access needs localhost or HTTPS and browser/OS permission. No provider credentials or fixture fallback are present in the frontend. `pnpm check` now includes the 16 audio transport tests.
+
+Opt-in paid synthetic-speech test against a running real backend (not acceptance of a physical microphone, Kazakh, or mixed speech):
+
+```powershell
+$env:REAL_VOICE="1"
+pnpm exec playwright test e2e/real-voice.spec.ts --project=desktop-chromium
+Remove-Item Env:REAL_VOICE
+```
+
+This test generates non-personal RU speech using real TTS, supplies it to real browser MediaRecorder through WebAudio, sends it through the real STT/router/TTS API, and checks actual audio playback. It does not intercept API responses. Default browser tests use explicit test responses and a simulated microphone; they never call OpenAI.
 
 See [AUDIO_HANDOFF.md](AUDIO_HANDOFF.md) and the [root README](../README.md) for current branch-specific status and setup. Full-generation `tts` must not be substituted for unavailable `tts_first_audio`. If only synthesis fails, preserve the successful transcript/text/trace and retry only speech.

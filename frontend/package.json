@@ -14,8 +14,9 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:transport": "node --test scripts/transport.check.mjs",
+    "test:audio": "node --test scripts/audio.check.mjs",
     "test:watch": "vitest",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:transport && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:transport && pnpm test:audio && pnpm build"
   },
   "dependencies": {
     "react": "19.3.0",

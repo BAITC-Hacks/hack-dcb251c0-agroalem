@@ -5,6 +5,20 @@ Reader: Tim.
 
 Use this file for frontend -> backend handoffs and contract requests. Keep newest handoff at the top.
 
+## 2026-09-23 — React microphone/STT/TTS connected and live synthetic RU verified
+
+Commit: the commit containing this handoff (`git log -1 --oneline`), branch `danil/frontend`.
+
+Ready: browser microphone permission/start/stop/cancel/cleanup, shared text+voice session, validated per-turn transcript and trace, native MP3 playback with AI disclosure, TTS-only retry preserving successful text/trace, nullable optional full-generation TTS time. Uses existing v0.2 endpoints only. No provider keys, runtime fixtures, backend edits, common-contract edits or merges.
+
+Verification: `pnpm check` passes format/lint/typecheck, 52 unit tests, 23 text transport tests, 16 audio transport tests and build. `pnpm test:e2e`: 15 passed, 7 intentional skips. Independent review found no blockers. Kazakh/mixed tests were not run, as explicitly requested by the user for this delivery.
+
+Live acceptance: `REAL_VOICE=1 pnpm exec playwright test e2e/real-voice.spec.ts --project=desktop-chromium` passed once against published `95eca20` in a clean separate checkout. Synthetic RU speech from real TTS → browser WebAudio/MediaRecorder → real STT/router/answer/TTS → MP3 playback; no intercepted API response. Language ru, SC11, real server total ~11.37 s, `tts_first_audio=null`. Physical human microphone, Safari/MP4 and RU/KK/mixed coverage are NOT established by this smoke. Backend suite in isolated runtime: 110 passed.
+
+Remaining integration gates: full evaluation, physical-mic/multilingual acceptance, latency improvement, one-command combined launch and protected HTTPS judge hosting. Please retain current Saqta UI and existing tests when integrating. No backend change required for the completed frontend slice.
+
+---
+
 ## 2026-09-23 — README status refreshed; audio contract received
 
 Explicit user target: update root README and commit/push it before subsequent audio/provider work. README now separates the verified fcb9efb text UI from the newly published 14346a1 audio/grounded-answer backend and documents real separate-checkout commands. No backend branch or shared contract was modified.

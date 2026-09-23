@@ -1,114 +1,56 @@
-# DANIL_STATE.md — Danil/frontend persistent agent memory
+# DANIL_STATE.md — Danil/frontend persistent memory
 
-Owner: Danil's computer / frontend Codex.
+Owner: Danil. Branch: `danil/frontend`. Updated: 2026-09-23.
 
-Only Danil's agent should normally edit this file. Update it in every completed frontend target commit.
+## Last completed target
 
-## Current branch
+Connected the approved reference-driven React UI to Tim's published v0.2 audio contract. User explicitly approved microphone → existing OpenAI backend → answer/trace/player and requested commit/push. No backend implementation, common contract, Tim branch, or main was changed or merged.
 
-`danil/frontend`
+## Implemented
 
-## Current objective
+- `VoiceRecorder`: explicit user-click permission, WebM/Opus or MP4, stop/send, cancel, permission/device/format errors, 60-second automatic stop/send, 20 MiB bound. All tracks and timers released on stop/cancel/error/unmount, including delayed permission responses.
+- `AudioApiClient.submitVoice` sends multipart `/v1/turn/audio`; voice and text share a session. Returned trace is validated with Zod and linked to its own exchange. Failed/pending turns never borrow previous trace. No fixture fallback.
+- Transcript from the API replaces the pending voice label; failed voice input remains available for an explicit retry. Completed turns release the input Blob.
+- `VoicePlayer`: explicit native MP3 playback, AI-voice disclosure, bounded base64 decoding, object-URL cleanup, loading/cancel/errors. Failed TTS preserves successful transcript/answer/trace; retry calls only `/v1/audio/speech`. Text answers may also be explicitly synthesized.
+- Optional `latency_ms.tts` is rendered as full-generation duration, not `tts_first_audio`. Unknown timings remain `—`; no timing/confidence/scenario inference in frontend.
+- Existing Saqta desktop/mobile text/trace layout retained, including trace scroll above non-overlay composer. Recording locks conflicting text submits; stop/cancel stay accessible.
+- Audio transport tests now run inside `pnpm check`; inherited transport formatting is corrected. Test outputs, local credentials and dependencies remain ignored.
 
-Publish the user-requested root README update first, then connect the existing Saqta UI to Tim's newly published voice contract and prepare an online judge demo. The user clarified that offline inference is not required.
+## Verification evidence
 
-## Last completed goal
-
-Updated root README with the hackathon purpose, branch-specific ready/pending status, actual separate-checkout startup commands, historical/live verification boundaries, and remaining judge-hosting gates. Fast-forwarded only danil/frontend from fcb9efb to published b3f0982; no backend/main merge.
-
-## Verified frontend facts
-
-- `frontend/` is a React 19 + TypeScript 5.9 + Vite 8 application managed by pnpm 11.
-- The project has working format, lint, type-check, unit-test, browser-test, build, and dev commands.
-- `pnpm-lock.yaml` is committed for reproducible installation.
-- The customer surface provides text input, immutable history, pending/success/error states, duplicate-submit lockout, cancellation, and retry in the same local turn record.
-- One browser session ID is retained across conversation turns.
-- `HttpTurnClient` sends the exact `{session_id, text}` payload to `POST /v1/turn/text`, validates success data with Zod, rejects a mismatched response session, and now enforces the published 120-second deadline for routing plus grounded response.
-- HTTP `422`, `502`, `503`, `504`, network failures, and invalid success payloads become failed turns; none create fixture routing data.
-- Every completed reply keeps its own supervisor trace. The newest turn is selected automatically, and an older trace remains available through that turn's explicit trace control.
-- Pending and failed turns never borrow the last successful trace; cancel/timeout wording does not claim that server-side processing stopped.
-- Trace renders transcript, `ru|kk|mixed|unknown`, all scenarios in backend order, confidence, reason, alternatives, slots, actions, continuation, clarification, handoff, confirmation requirement, and all published latency fields.
-- `null` latency renders as `—`; numeric latency is not recomputed.
-- `requires_confirmation` is labelled as a requirement and explicitly says that the action has not run.
-- Desktop and 320/360 px browser checks keep conversation and trace reachable without horizontal page overflow, including 200% text at 320 px. The last latency row is fully visible above the composer.
-- Latest submitted replies remain visible as history grows; explicit history navigation disables automatic following. Selecting a historical trace reveals its heading and transcript.
-- Empty/whitespace input disables Send. Concept placeholders are not application data; images are not required for understanding the UI.
-- Provider credentials remain server-side; frontend configuration contains only the non-secret API base URL.
-
-## Voice capture/playback status
-
-- Browser recording and assistant playback are not connected in React yet; the microphone remains disabled.
-- Contract v0.2 is now published in origin/tim/backend at 14346a1: multipart `/v1/turn/audio`, standalone transcription/speech, and optional MP3 base64 response. Read the remote contract, not this branch's stale common contract.
-- AudioApiClient and audio.check.mjs were supplied in b3f0982. Locally executed `node --test scripts/audio.check.mjs`: 16 passed, using controlled responses only.
-- Optional full-generation `latency_ms.tts`, assistant_audio, and audio_error are not yet consumed by the React schema/UI. `tts_first_audio` remains null and must not be relabelled.
-- No live end-to-end audio result is claimed; preserve a completed text/trace when only TTS fails and retry only synthesis.
-
-## Backend integration status
-
-- Latest read-only source inspected: `origin/tim/backend` commit `14346a1`; text input is unchanged, response adds optional audio fields and full-generation TTS timing. Backend now includes grounded answers and OpenAI audio.
-- The following live evidence is historical for backend `ce761bd`, not acceptance of `14346a1`:
-- Text endpoint: `POST /v1/turn/text` with documented `422`, `502`, `503`, and `504` errors.
-- The earlier backend commit `2f20471` passed 17 tests. At current `ce761bd`, the full Windows run produced 63 passed and 1 failed: `test_atomic_write_creates_parent_and_preserves_unicode` read the UTF-8 JSON with the platform default encoding. This remains backend-owned.
-- Real health check returned `status=ok`, `business_scenarios=40`, and `system_intents=3`.
-- Direct real text smoke returned turn 1, language `ru`, scenario `SC11`, no clarification/handoff, real router latency about 5212.5 ms, and `null` STT/TTS timing.
-- Playwright re-verified the current frontend → Vite proxy → Tim backend at `ce761bd` → OpenAI router → conversation + supervisor trace path: `1 passed`.
-- A separate run without provider credentials verified a genuine backend `503` through the browser: `1 passed`; no intercepted response, fixture fallback, or stale successful trace.
-- These are local checks on Danil's computer against an isolated checkout of Tim's code, not connectivity checks between the two computers.
-- Tim's full 104-utterance evaluation baseline remains backend-owned and is not claimed by frontend.
-
-## Automated verification evidence
-
-From `frontend/`:
+Commands run from `frontend/`:
 
 ```powershell
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
+pnpm check
 pnpm test:e2e
-pnpm build
-pnpm peers check
+$env:REAL_VOICE="1"
+pnpm exec playwright test e2e/real-voice.spec.ts --project=desktop-chromium --output=test-results-live-voice
+Remove-Item Env:REAL_VOICE
 ```
 
-Historical results for frontend fcb9efb / backend ce761bd:
+- Format, ESLint, TypeScript and production build passed.
+- Vitest: 52 tests passed, including the final changed-answer-during-synthesis regression.
+- Text transport: 23 passed; audio transport: 16 passed, all controlled responses.
+- Default Playwright: 15 passed, 7 intentionally skipped (six opt-in live cases and desktop duplicate of mobile geometry). Includes native Chromium fake-device recording, denied permission, shared voice/text session, TTS-only retry, and 320/360 px/200% text regressions.
+- Real provider browser test: **1 passed**, backend `95eca20c5648896f1e326e69992b6da9b331f3fa`, no API interception. Real TTS generated synthetic non-personal RU input, WebAudio supplied it to real MediaRecorder, then real STT → LLM routing/answer → TTS → browser MP3 playback completed. Transcript and trace displayed; language `ru`, scenario `SC11`.
+- One measured live run: STT 980.26 ms, router 2604.57 ms, response 3172.07 ms, full TTS 4608.44 ms, server total 11367.61 ms. `tts_first_audio=null`. This is one smoke measurement, not a benchmark or SLA claim.
+- First live attempt got 502 because a subagent-owned backend process ended; relaunched the same published source in the root runtime and reran successfully. No backend code fix was needed.
+- Independent read-only code review found no blocking defects. Physical microphone, Safari/MP4 and broader recognition acceptance remain separate gates.
 
-- Vitest unit/component/contract/regression tests: 21 passed;
-- dependency-free transport/trace-selection checks: 23 passed;
-- intercepted Playwright desktop + narrow tests: 11 passed; 5 skipped (four opt-in live cases and the desktop duplicate of the mobile geometry case);
-- live Playwright browser-to-backend success: 1 passed when `REAL_BACKEND=1`;
-- genuine backend missing-provider `503`: 1 passed when `REAL_BACKEND_FAILURE=1` (a separate isolated server run);
-- build: passed;
-- peer dependency check: no issues.
+## Local runtime
 
-Current b3f0982 verification during README update: standalone audio checks 16 passed; `pnpm check` stops at Prettier differences in AUDIO_HANDOFF.md, scripts/audio.check.mjs, src/shared/turn-client/audio.ts and client.ts. The remaining check chain was not reached. Preserve this distinction until the voice integration target runs all checks again.
+- Frontend: `http://127.0.0.1:5173/`; Vite proxies `/api` to `127.0.0.1:8000`.
+- Backend runs from a separate clean detached checkout `../danil-ui-backend-check` at published `95eca20`; no backend files were copied into this branch. Server suite: 110 passed; dependency check passed.
+- Existing user-authorized OpenAI key is loaded server-side only from ignored local configuration. No credentials were committed. `/health` reports configured, but its static `provider_live_verified=false` is not a substitute for the separate live test evidence.
 
-## Decisions made
+## Boundaries and remaining gates
 
-- Work only on `danil/frontend`; Tim owns backend and integration into `main`.
-- Do not modify the local shared integration contract from the frontend branch.
-- Use `TurnClient` as the UI boundary; runtime defaults to `HttpTurnClient`.
-- Controlled payloads exist only in tests. There is no automatic runtime fixture fallback.
-- Frontend does not select or reorder scenarios, calculate confidence/reason, infer actions, or derive latency.
-- `actions=[]` means no actions ran; configured scenario actions are not displayed as executed.
-- Keep text E2E stable before beginning microphone/browser-audio work.
+- Not a complete hackathon acceptance: physical mic on the user's device, Safari, real RU/KK/mixed conversations, topic changes and routing baseline still need verification. User explicitly requested no Kazakh/mixed testing for this delivery; none was run. No 104-utterance accuracy claim.
+- Batch audio, no streaming; latency targets are not met by the measured smoke. Do not relabel full-generation time as first-heard audio.
+- `actions=[]` means no insurance operation ran; `requires_confirmation` is a scenario requirement; handoff does not establish a real operator connection.
+- Tim owns backend optimization, evaluation and final integration into main. Public HTTPS judge hosting, quota/access protection, and one-command combined React/backend launch remain open.
+- Historical text UI live evidence (`fcb9efb` against backend `ce761bd`) remains in previous commits; the new live synthetic-RU evidence above is for the current audio milestone.
 
-## Open blockers and limitations
+## Next exact target
 
-- Voice contract is published; React recording/playback, envelope validation, and live acceptance are still missing.
-- Scenario execution is not implemented by backend, so real `actions` remains empty.
-- Text STT and TTS-first-audio timings correctly remain unavailable.
-- The observed real router smoke was functionally correct but slower than the project latency target; optimization remains backend-owned and must be evidence-driven.
-- Tim's backend branch now has `run_mvp.py` for its built-in demo; it does not launch the separate React checkout. The root README update was explicitly assigned by the user. Final branch integration and a single combined launch remain open.
-- Official hackathon voice MVP is not ready: microphone → STT → router → TTS → playback is required; text is supplementary. Standalone browser recording can be prepared without an endpoint, but is not voice E2E.
-- GitHub PR #2 is draft and reported not mergeable during the audit. No merge/conflict resolution was attempted from this branch. Tim's comment requesting real successful and failed browser turns is covered by the separate local checks above.
-
-## Next exact target action
-
-Finish the README-only commit and push first. Then fix the accepted transport formatting, connect microphone/stop/cancel and explicit AI-audio playback to AudioApiClient, preserve current reference layout and test text/trace retention on TTS failure. Verify the latest backend separately. Judge access needs HTTPS hosting and server-only secrets; the supplied HackAlem workspace/API invitation is not an app deployment URL.
-
-## Do not forget
-
-- Do not invent backend endpoints or audio formats.
-- Do not put `OPENAI_API_KEY` or `NVIDIA_API_KEY` in frontend code or `VITE_` variables.
-- Do not fake latency, routing, actions, or successful backend state.
-- Commit and push completed frontend targets only on `danil/frontend`.
+User manual check: reload local site, click Начать запись, grant permission, speak, click Остановить и отправить, then play the assistant audio. Follow with RU/KK/mixed acceptance and judge deployment once hosting is selected. Commit and push only verified Danil changes; never force-push or merge another role's branch.

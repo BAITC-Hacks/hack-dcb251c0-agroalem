@@ -17,6 +17,7 @@ const latencySchema = z.object({
   router: z.number().nonnegative().nullable(),
   response: z.number().nonnegative().nullable(),
   tts_first_audio: z.number().nonnegative().nullable(),
+  tts: z.number().nonnegative().nullable().optional(),
   total: z.number().nonnegative().nullable(),
 });
 
@@ -25,6 +26,15 @@ export const turnResultSchema = z.object({
   turn: z.number().int().positive(),
   transcript: z.string(),
   assistant_text: z.string(),
+  assistant_audio: z
+    .object({
+      mime_type: z.literal("audio/mpeg"),
+      base64: z.string().min(1),
+      ai_generated: z.literal(true),
+    })
+    .nullable()
+    .optional(),
+  audio_error: z.string().nullable().optional(),
   trace: z.object({
     language: z.enum(["ru", "kk", "mixed", "unknown"]),
     scenarios: z.array(scenarioDecisionSchema),

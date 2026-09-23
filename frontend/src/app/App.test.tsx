@@ -32,13 +32,6 @@ describe("App", () => {
     const client = new RecordingClient();
     render(<App client={client} />);
 
-    expect(
-      screen.getByRole("button", { name: "Микрофон пока недоступен" }),
-    ).toBeDisabled();
-    expect(
-      screen.getByText("Голосовой режим пока недоступен."),
-    ).toBeInTheDocument();
-
     const input = screen.getByLabelText("Сообщение клиента");
     await user.type(input, "Первый вопрос");
     await user.click(screen.getByRole("button", { name: "Отправить" }));

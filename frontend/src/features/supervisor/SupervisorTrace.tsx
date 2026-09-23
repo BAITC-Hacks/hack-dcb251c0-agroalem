@@ -14,6 +14,7 @@ const latencyLabels: Record<keyof TurnResult["trace"]["latency_ms"], string> = {
   router: "Router",
   response: "Response",
   tts_first_audio: "TTS first audio",
+  tts: "TTS · полная генерация",
   total: "Total",
 };
 
@@ -22,8 +23,8 @@ const percentFormatter = new Intl.NumberFormat("ru-RU", {
   maximumFractionDigits: 0,
 });
 
-function ms(value: number | null) {
-  return value === null ? "—" : `${value.toLocaleString("ru-RU")} мс`;
+function ms(value: number | null | undefined) {
+  return value == null ? "—" : `${value.toLocaleString("ru-RU")} мс`;
 }
 
 function displayValue(value: unknown) {

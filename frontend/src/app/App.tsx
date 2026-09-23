@@ -1,30 +1,38 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { selectExchange } from "../features/conversation/traceSelection";
 import { SupervisorTrace } from "../features/supervisor/SupervisorTrace";
+import { VoiceRecorder } from "../features/voice/VoiceRecorder";
+import { VoicePlayer } from "../features/voice/VoicePlayer";
+import { AudioApiClient, AudioApiError } from "../shared/turn-client/audio";
 import {
   HttpTurnClient,
   TurnClientError,
   type TurnClient,
 } from "../shared/turn-client/client";
-import type { TurnResult } from "../shared/turn-client/schema";
+import {
+  turnResultSchema,
+  type TurnResult,
+} from "../shared/turn-client/schema";
 import styles from "./App.module.css";
 
 type Exchange = {
   id: number;
   userText: string;
+  recording?: Blob;
   result?: TurnResult;
   error?: string;
 };
 
 type Props = {
   client?: TurnClient;
+  audioClient?: Pick<AudioApiClient, "submitVoice" | "synthesize">;
 };
 
 function makeSessionId() {
   return `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function App({ client }: Props) {
+export function App({ client, audioClient }: Props) {
   const resolvedClient = useMemo(
     () =>
       client ??
@@ -32,6 +40,14 @@ export function App({ client }: Props) {
     [client],
   );
   const sessionId = useRef(makeSessionId());
+  const resolvedAudioClient = useMemo(
+    () =>
+      audioClient ??
+      new AudioApiClient(import.meta.env.VITE_API_BASE_URL?.trim() || "/api"),
+    [audioClient],
+  );
+  const recordingBusy = useRef(false);
+  const [recording, setRecording] = useState(false);
   const nextId = useRef(1);
   const activeRequest = useRef<AbortController | null>(null);
   const traceSurface = useRef<HTMLElement | null>(null);
@@ -62,47 +78,79 @@ export function App({ client }: Props) {
     [],
   );
 
-  async function submitText(text: string, retryId?: number) {
+  async function submitTurn(input: string | Blob, retryId?: number) {
     // The ref closes the gap before React has rendered disabled controls.
-    if (activeRequest.current || !text || text.length > 4000) return;
+    if (activeRequest.current) return;
+    if (
+      typeof input === "string" &&
+      (recordingBusy.current || !input || input.length > 4000)
+    )
+      return;
+    const text =
+      typeof input === "string"
+        ? input
+        : "Голосовое сообщение · ожидаем распознавание";
+    const entry: Exchange = {
+      id: retryId ?? nextId.current++,
+      userText: text,
+      ...(typeof input === "string" ? {} : { recording: input }),
+    };
 
     const controller = new AbortController();
     activeRequest.current = controller;
-    const id = retryId ?? nextId.current++;
+    const id = entry.id;
     setLatestRequestId(id);
     followReply.current = true;
     setPending(true);
     setSelectedId(id);
     setExchanges((current) =>
       retryId === undefined
-        ? [...current, { id, userText: text }]
-        : current.map((exchange) =>
-            exchange.id === id ? { id, userText: text } : exchange,
-          ),
+        ? [...current, entry]
+        : current.map((exchange) => (exchange.id === id ? entry : exchange)),
     );
 
     try {
-      const result = await resolvedClient.submit(
-        {
-          session_id: sessionId.current,
-          text,
-        },
-        controller.signal,
-      );
+      let result: TurnResult;
+      if (typeof input === "string") {
+        result = await resolvedClient.submit(
+          { session_id: sessionId.current, text },
+          controller.signal,
+        );
+      } else {
+        const envelope = await resolvedAudioClient.submitVoice(
+          sessionId.current,
+          input,
+          controller.signal,
+        );
+        const parsed = turnResultSchema.safeParse(envelope);
+        if (!parsed.success || parsed.data.session_id !== sessionId.current) {
+          throw new AudioApiError(
+            "Голосовой ответ не соответствует сессии или контракту.",
+            "invalid_contract",
+          );
+        }
+        result = parsed.data;
+      }
       if (activeRequest.current !== controller) return;
       if (controller.signal.aborted) {
         throw new DOMException("Cancelled", "AbortError");
       }
       setExchanges((current) =>
         current.map((exchange) =>
-          exchange.id === id ? { ...exchange, result } : exchange,
+          exchange.id === id
+            ? {
+                id,
+                userText: typeof input === "string" ? text : result.transcript,
+                result,
+              }
+            : exchange,
         ),
       );
     } catch (error) {
       if (activeRequest.current !== controller) return;
       const message = controller.signal.aborted
         ? "Ожидание отменено. Сервер мог продолжить обработку; результат не подтверждён."
-        : error instanceof TurnClientError
+        : error instanceof TurnClientError || error instanceof AudioApiError
           ? error.message
           : "Не удалось обработать запрос.";
       setExchanges((current) =>
@@ -121,10 +169,16 @@ export function App({ client }: Props) {
   function submit(event: FormEvent) {
     event.preventDefault();
     const text = draft.trim();
-    if (!text || text.length > 4000 || activeRequest.current) return;
+    if (
+      !text ||
+      text.length > 4000 ||
+      activeRequest.current ||
+      recordingBusy.current
+    )
+      return;
 
     setDraft("");
-    void submitText(text);
+    void submitTurn(text);
   }
 
   return (
@@ -164,8 +218,8 @@ export function App({ client }: Props) {
                 <div className={styles.empty}>
                   <h2>Начните диалог</h2>
                   <p>
-                    Введите сообщение клиента, чтобы увидеть ответ и решение
-                    маршрутизатора
+                    Нажмите микрофон или введите сообщение, чтобы увидеть ответ
+                    и решение маршрутизатора
                   </p>
                 </div>
               ) : (
@@ -210,9 +264,19 @@ export function App({ client }: Props) {
                         <h2>Ассистент</h2>
                       </div>
                       {exchange.result ? (
-                        <div className={styles.assistantBubble}>
-                          {exchange.result.assistant_text}
-                        </div>
+                        <>
+                          <div className={styles.assistantBubble}>
+                            {exchange.result.assistant_text}
+                          </div>
+                          <VoicePlayer
+                            audio={exchange.result.assistant_audio}
+                            audioError={exchange.result.audio_error}
+                            text={exchange.result.assistant_text}
+                            synthesize={(text, signal) =>
+                              resolvedAudioClient.synthesize(text, signal)
+                            }
+                          />
+                        </>
                       ) : exchange.error ? (
                         <>
                           <div className={styles.errorBubble} role="alert">
@@ -226,10 +290,13 @@ export function App({ client }: Props) {
                           </div>
                           <button
                             className={styles.retry}
-                            disabled={pending}
+                            disabled={pending || recording}
                             type="button"
                             onClick={() =>
-                              void submitText(exchange.userText, exchange.id)
+                              void submitTurn(
+                                exchange.recording ?? exchange.userText,
+                                exchange.id,
+                              )
                             }
                           >
                             Попробовать снова
@@ -307,40 +374,27 @@ export function App({ client }: Props) {
               placeholder="Введите сообщение клиента…"
               rows={2}
               maxLength={4000}
-              disabled={pending}
+              disabled={pending || recording}
             />
             <button
               className={styles.sendButton}
-              disabled={pending || !draft.trim()}
+              disabled={pending || recording || !draft.trim()}
               type="submit"
             >
               {pending ? "Отправляем…" : "Отправить"}
             </button>
           </div>
           <div className={styles.composerMeta}>
-            <div className={styles.voiceStatus}>
-              <button
-                className={styles.micButton}
-                type="button"
-                disabled
-                aria-label="Микрофон пока недоступен"
-                aria-describedby="voice-contract-note"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  aria-hidden="true"
-                >
-                  <rect x="9" y="3" width="6" height="12" rx="3" />
-                  <path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3M9 21h6" />
-                </svg>
-              </button>
-              <span id="voice-contract-note">
-                Голосовой режим пока недоступен.
-              </span>
-            </div>
+            <VoiceRecorder
+              disabled={pending}
+              onBusyChange={(busy) => {
+                recordingBusy.current = busy;
+                setRecording(busy);
+              }}
+              onRecorded={(blob) => {
+                void submitTurn(blob);
+              }}
+            />
             {pending ? (
               <button
                 className={styles.cancelButton}
