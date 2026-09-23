@@ -4,75 +4,125 @@ Role: backend + integration owner
 Branch: `tim/backend`
 
 ## Current objective
-Implement the first real structured LLM routing call against the official 40-scenario catalog.
 
-## Last completed goal
-Phase 0 remote audit completed and initial backend foundation added: official catalog loading, routing schemas, scenario-ID validation, FastAPI health endpoint, and backend tests.
+Verify the structured text-routing target in CI/live API, then produce the first official dev-set evaluation baseline.
+
+## Last completed engineering work
+
+Implemented the first text routing vertical slice in code:
+
+```text
+text
+-> official scenario catalog/context
+-> OpenAI Responses API structured output
+-> official scenario-ID validation
+-> deterministic confidence/handoff policy
+-> process-memory session state
+-> text response
+-> trace
+```
+
+Published concrete text transport:
+
+```text
+POST /v1/turn/text
+```
 
 ## Verified repository facts
-- `main` contains the official starter-kit files imported from Danil's verified commit.
-- Official data contains 40 business scenarios and 3 system intents.
-- Remote repository had no application/backend dependency manifest before this target.
-- Danil commit `1b9e583d6bf8dfcf44c600d30ed11acf2c91d7bf` contains the larger shared bootstrap and starter-kit validation evidence.
-- `tim/backend` is the backend work branch.
-- Initial backend stack decision is Python + FastAPI + Pydantic + OpenAI SDK + pytest.
 
-## Backend components working in code
-- Official scenario catalog loader.
-- Count/system-intent guards.
-- Structured router output models.
-- Unknown scenario-ID validator.
-- FastAPI app with `GET /health`.
-- Unit tests authored for catalog and router-ID validation.
+- Official starter kit is present in shared `main`.
+- 40 business scenarios + 3 system intents are the routing catalog.
+- Danil completed frontend Phase 0 in commit `3998d9da01719f8d17431a262952779d384010fb`.
+- Danil reports no frontend application/framework yet and requested a real text/audio transport contract.
+- Text transport is now defined; voice transport remains UNKNOWN.
+- Initial backend stack is Python + FastAPI + Pydantic + OpenAI SDK + pytest.
+- Current OpenAI structured-output implementation uses `client.responses.parse(..., text_format=...)`.
+- Initial router model default is `gpt-5.6-luna`, overridable by `OPENAI_ROUTER_MODEL`.
+
+## Backend components present in code
+
+- official catalog loader;
+- strict LLM structured-output schema;
+- normalized domain router schema;
+- unknown scenario-ID rejection;
+- prompt built from official `description`, `not_this_if`, examples, priority, slots, actions, confirmation and handoff metadata;
+- confidence policy;
+- low-confidence streak;
+- explicit operator handoff;
+- up-to-10-item session routing history;
+- FastAPI `GET /health`;
+- FastAPI `POST /v1/turn/text`;
+- measured router/response/total timings;
+- tests for catalog, validation, router normalization, policy and API;
+- GitHub backend test workflow.
+
+## Safety/trace decisions
+
+- No configured scenario action is reported as executed; `trace.actions=[]` until executor exists.
+- Unknown STT/TTS timings remain null.
+- API credentials are server-side environment only.
+- Clarification text may come from the router as a short customer-facing question, while reason remains concise operational trace and not chain-of-thought.
 
 ## Test/evidence status
-- Danil's incoming bootstrap records that `python -m py_compile starter-kit/evaluate.py` passed and official references were validated.
-- Backend tests in this target have been authored but NOT executed from this chat.
-- Local dependency installation has NOT been executed from this chat.
 
-## Evaluation baseline
-Not measured yet. No routing predictions exist yet.
+Already verified from Danil bootstrap:
+- starter-kit reference validation;
+- `python -m py_compile starter-kit/evaluate.py`.
+
+For current backend target:
+- tests are authored;
+- GitHub PR CI has been configured;
+- CI result must be checked before claiming green;
+- no live OpenAI request has yet been claimed as successful;
+- no evaluation baseline has yet been measured.
 
 ## API contract status
-- Shared domain response contract exists.
-- Health endpoint is implemented.
-- Customer turn endpoint/transport remains `UNKNOWN` until the real LLM route is implemented.
 
-## Environment/dependencies
-Declared in `backend/requirements.txt`.
-Exact resolved package versions remain unverified until installation on Tim's workstation.
+Implemented text route:
+- `POST /v1/turn/text`.
+
+Documented errors:
+- 422 validation;
+- 503 provider not configured;
+- 502 provider/structured-output failure;
+- 504 provider timeout.
+
+Voice/STT/TTS transport remains UNKNOWN.
 
 ## Open blockers
-- Need local Windows execution to install dependencies and run backend tests.
-- Need `OPENAI_API_KEY` or approved provider credentials before a real LLM routing call can be verified.
-- Draft PR #2 contains richer overlapping shared docs from Danil and needs deliberate reconciliation; do not overwrite Danil's role-owned state.
+
+- CI result pending.
+- Live LLM smoke/evaluation requires a valid server-side `OPENAI_API_KEY`.
+- Danil branch remains diverged from main; his Phase 0 work is visible in draft PR #2 and must not be overwritten.
+- Current session state is in-memory and not production durable.
 
 ## Decisions made
-- Git is persistent memory for both agents.
-- Python/FastAPI selected for backend because no prior application stack existed and starter-kit tooling is Python.
-- Final scenario decision will be LLM-based.
-- No customer turn endpoint is published until it is actually implemented.
-- Unknown latency remains null/unreported.
 
-## Commands/evidence actually run in this session
-- Inspected GitHub repository metadata, branches and commits.
-- Reviewed Danil branch and commit `1b9e583`.
-- Imported official starter-kit/shared docs from Danil into `main`.
-- Fast-forwarded `tim/backend` to the shared main baseline.
-- Added backend source/test files through GitHub.
+- Initial router model default: `gpt-5.6-luna`, with env override.
+- Use current OpenAI Responses structured parsing rather than free-form JSON parsing.
+- Implement text E2E before voice.
+- Publish concrete transport only after route exists in code.
+- Keep executor actions out of trace until actually proposed/executed.
 
-## Last synced main commit before backend target
-`e0823fc64dfe22340a08bd0dbc57c8046f1825a5`
+## Commands/evidence actually performed through GitHub in this target
+
+- Read mandatory startup/state/contract files.
+- Read current Tim/Danil branch deltas.
+- Read Danil fresh Phase 0 commit and handoff.
+- Checked current official OpenAI SDK structured-output usage.
+- Added router/policy/session/API/test/CI code to `tim/backend`.
+- Added backend CI workflow to shared `main`.
+
+## Last known shared main
+
+Shared main advanced with backend CI workflow after the previous starter-kit sync.
 
 ## Next exact target action
-On Tim's workstation first run:
 
-    git fetch origin --prune
-    git switch tim/backend
-    git pull --ff-only origin tim/backend
-    py -m venv .venv
-    .venv\Scripts\activate
-    py -m pip install -r backend\requirements.txt
-    py -m pytest backend\tests -q
-
-Record actual results here. If green, implement the OpenAI structured router using official scenario fields and add evaluation prediction generation.
+1. Check PR #3 backend CI.
+2. Fix any failing tests until CI is green.
+3. Run one live `POST /v1/turn/text` smoke with server-side credentials.
+4. Add a dev-set prediction runner.
+5. Run official:
+   `python starter-kit/evaluate.py predictions.json starter-kit/dev_utterances.json`
+6. Record measured baseline/failure pairs in this file before tuning.
