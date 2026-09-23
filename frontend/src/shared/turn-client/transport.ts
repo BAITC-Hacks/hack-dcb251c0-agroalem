@@ -2,7 +2,11 @@ export class TurnClientError extends Error {
   readonly status: number | null;
   readonly code: string;
 
-  constructor(message: string, status: number | null = null, code = "request_failed") {
+  constructor(
+    message: string,
+    status: number | null = null,
+    code = "request_failed",
+  ) {
     super(message);
     this.name = "TurnClientError";
     this.status = status;
@@ -18,6 +22,7 @@ type Options = {
 
 function statusMessage(status: number): string {
   if (status === 422) return "Проверьте текст запроса.";
+  if (status === 502) return "Backend не смог построить корректный ответ.";
   if (status === 503) return "Маршрутизатор пока не настроен.";
   if (status === 504) return "Маршрутизатор не ответил вовремя.";
   return "Backend не смог обработать запрос.";
@@ -36,7 +41,8 @@ export async function postTurnJson(
   let timedOut = false;
   const cancel = () => controller.abort();
   const assertActive = () => {
-    if (signal?.aborted) throw new DOMException("Request cancelled", "AbortError");
+    if (signal?.aborted)
+      throw new DOMException("Request cancelled", "AbortError");
     if (timedOut) {
       throw new TurnClientError(
         "Время ожидания истекло. Сервер мог продолжить обработку; ответ не подтверждён.",
@@ -62,29 +68,48 @@ export async function postTurnJson(
     assertActive();
     if (!response.ok) {
       // Do not echo arbitrary provider/server details or HTML to the UI.
-      throw new TurnClientError(statusMessage(response.status), response.status, "http_error");
+      throw new TurnClientError(
+        statusMessage(response.status),
+        response.status,
+        "http_error",
+      );
     }
     let data: unknown;
     try {
       data = await response.json();
     } catch {
       assertActive();
-      throw new TurnClientError("Backend вернул невалидный JSON.", null, "invalid_json");
+      throw new TurnClientError(
+        "Backend вернул невалидный JSON.",
+        null,
+        "invalid_json",
+      );
     }
     assertActive();
     return data;
   } catch (error) {
     assertActive();
     if (error instanceof TurnClientError) throw error;
-    throw new TurnClientError("Не удалось связаться с backend.", null, "network_error");
+    throw new TurnClientError(
+      "Не удалось связаться с backend.",
+      null,
+      "network_error",
+    );
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener("abort", cancel);
   }
 }
 
-export function requireMatchingSession(expected: string, received: string): void {
+export function requireMatchingSession(
+  expected: string,
+  received: string,
+): void {
   if (received !== expected) {
-    throw new TurnClientError("Ответ относится к другой сессии и не был применён.", null, "session_mismatch");
+    throw new TurnClientError(
+      "Ответ относится к другой сессии и не был применён.",
+      null,
+      "session_mismatch",
+    );
   }
 }

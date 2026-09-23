@@ -1,64 +1,189 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
-import { App } from "./App";
+import { describe, expect, it, vi } from "vitest";
+
 import type { TurnClient } from "../shared/turn-client/client";
-import type { TurnResult } from "../shared/turn-client/schema";
+import type { TurnInput, TurnResult } from "../shared/turn-client/schema";
+import { validTurnPayload } from "../test/turn-fixture";
+import { App } from "./App";
 
-const result: TurnResult = {
-  session_id: "test-session",
-  turn: 1,
-  transcript: "Я только что попал в ДТП",
-  assistant_text: "Главное — все ли целы?",
-  trace: {
-    language: "ru",
-    scenarios: [
-      {
-        scenario_id: "SC11",
-        confidence: 0.91,
-        reason: "Immediate road accident",
-      },
-    ],
-    alternatives: [{ scenario_id: "SC13", confidence: 0.2 }],
-    slots: {},
-    actions: [],
-    is_continuation: false,
-    needs_clarification: false,
-    handoff: false,
-    requires_confirmation: false,
-    latency_ms: {
-      stt: null,
-      triage: null,
-      router: 120,
-      response: 2,
-      tts_first_audio: null,
-      total: 122,
-    },
-  },
-};
+function resultFor(input: TurnInput, turn: number): TurnResult {
+  return {
+    ...validTurnPayload,
+    session_id: input.session_id,
+    turn,
+    transcript: input.text,
+    assistant_text: `Ответ ${turn}`,
+  };
+}
 
-class FakeClient implements TurnClient {
-  async submit() {
-    return result;
+class RecordingClient implements TurnClient {
+  readonly inputs: TurnInput[] = [];
+
+  async submit(input: TurnInput) {
+    this.inputs.push(input);
+    return resultFor(input, this.inputs.length);
   }
 }
 
 describe("App", () => {
-  it("submits text and renders assistant response with real trace fields", async () => {
+  it("keeps one session and a trace attached to every completed turn", async () => {
     const user = userEvent.setup();
-    render(<App client={new FakeClient()} />);
+    const client = new RecordingClient();
+    render(<App client={client} />);
+
+    expect(
+      screen.getByRole("button", { name: "Микрофон пока недоступен" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText("Ожидаем voice contract от backend."),
+    ).toBeInTheDocument();
+
+    const input = screen.getByLabelText("Сообщение клиента");
+    await user.type(input, "Первый вопрос");
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+    expect(await screen.findByText("Ответ 1")).toBeInTheDocument();
+
+    await user.type(input, "Второй вопрос");
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+    expect(await screen.findByText("Ответ 2")).toBeInTheDocument();
+
+    expect(client.inputs).toHaveLength(2);
+    expect(client.inputs[0]?.session_id).toBe(client.inputs[1]?.session_id);
+    expect(screen.getAllByText("Первый вопрос").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Второй вопрос").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("heading", { name: "Routing trace" }),
+    ).toHaveLength(1);
+    const tracePanel = within(
+      screen.getByRole("region", { name: "Supervisor trace" }),
+    );
+    expect(tracePanel.getByText("Второй вопрос")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Показать trace реплики 1" }),
+    );
+    expect(tracePanel.getByText("Первый вопрос")).toBeInTheDocument();
+  });
+
+  it("renders all trace fields without treating confirmation as an action", async () => {
+    const user = userEvent.setup();
+    render(<App client={new RecordingClient()} />);
 
     await user.type(
       screen.getByLabelText("Сообщение клиента"),
-      "Я только что попал в ДТП",
+      "Статус заявки",
     );
     await user.click(screen.getByRole("button", { name: "Отправить" }));
 
-    expect(await screen.findByText("Главное — все ли целы?")).toBeInTheDocument();
-    expect(screen.getByText("SC11")).toBeInTheDocument();
-    expect(screen.getByText("91%")).toBeInTheDocument();
-    expect(screen.getByText("120 ms")).toBeInTheDocument();
-    expect(screen.getByText("TTS first audio")).toBeInTheDocument();
-    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    expect(await screen.findByText("SC11")).toBeInTheDocument();
+    expect(screen.getByText("SC13")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+    expect(screen.getByText("policy_number")).toBeInTheDocument();
+    expect(screen.getByText("P-42")).toBeInTheDocument();
+    expect(screen.getByText("Действия не выполнялись")).toBeInTheDocument();
+    expect(screen.getByText("Требуется подтверждение")).toBeInTheDocument();
+    expect(screen.getByText("Действие ещё не выполнено")).toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each(["kk", "mixed"] as const)(
+    "renders the backend language value %s",
+    async (language) => {
+      const user = userEvent.setup();
+      const client: TurnClient = {
+        submit: async () => ({
+          ...validTurnPayload,
+          trace: { ...validTurnPayload.trace, language },
+        }),
+      };
+      render(<App client={client} />);
+
+      await user.type(screen.getByLabelText("Сообщение клиента"), "Тіл тесті");
+      await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+      expect(
+        await screen.findByText(language, { exact: true }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it("renders clarification and handoff states returned by the backend", async () => {
+    const user = userEvent.setup();
+    const client: TurnClient = {
+      submit: async () => ({
+        ...validTurnPayload,
+        trace: {
+          ...validTurnPayload.trace,
+          needs_clarification: true,
+          handoff: true,
+        },
+      }),
+    };
+    render(<App client={client} />);
+
+    await user.type(screen.getByLabelText("Сообщение клиента"), "Нужна помощь");
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+    expect(await screen.findByText("Уточнение: да")).toBeInTheDocument();
+    expect(screen.getByText("Оператор: да")).toBeInTheDocument();
+    expect(screen.getByText("Передача оператору")).toBeInTheDocument();
+  });
+
+  it("locks duplicate submission while the turn is pending", async () => {
+    const user = userEvent.setup();
+    let resolveTurn: ((result: TurnResult) => void) | undefined;
+    const client: TurnClient = {
+      submit: vi.fn(
+        (input: TurnInput) =>
+          new Promise<TurnResult>((resolve) => {
+            resolveTurn = (result) =>
+              resolve({ ...result, session_id: input.session_id });
+          }),
+      ),
+    };
+    render(<App client={client} />);
+
+    await user.type(screen.getByLabelText("Сообщение клиента"), "Запрос");
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+    expect(screen.getByRole("button", { name: "Отправляем…" })).toBeDisabled();
+    expect(client.submit).toHaveBeenCalledTimes(1);
+
+    resolveTurn?.(validTurnPayload);
+    expect(await screen.findByText("Проверяю статус.")).toBeInTheDocument();
+  });
+
+  it("keeps the failed turn and retries through the same client session", async () => {
+    const user = userEvent.setup();
+    const inputs: TurnInput[] = [];
+    const client: TurnClient = {
+      submit: vi.fn(async (input: TurnInput) => {
+        inputs.push(input);
+        if (inputs.length === 1) throw new Error("offline");
+        return resultFor(input, 1);
+      }),
+    };
+    render(<App client={client} />);
+
+    await user.type(
+      screen.getByLabelText("Сообщение клиента"),
+      "Повтори запрос",
+    );
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Не удалось обработать запрос.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Повторить" }));
+    expect(await screen.findByText("Ответ 1")).toBeInTheDocument();
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]?.session_id).toBe(inputs[1]?.session_id);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("region", { name: "Conversation" })
+        .querySelectorAll("[class*='userBubble']"),
+    ).toHaveLength(1);
   });
 });

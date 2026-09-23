@@ -2,7 +2,7 @@
 
 Status: approved for implementation on 2026-09-23 by the user-provided frontend execution brief.
 
-Owner: Danil / frontend. Backend source reviewed read-only at `origin/tim/backend` commit `926ccec`.
+Owner: Danil / frontend. Backend source re-verified read-only at `origin/tim/backend` commit `ce761bd`.
 
 ## Goal
 
@@ -23,11 +23,11 @@ The local `.codex/INTEGRATION_CONTRACT.md` is not changed in this slice. The fro
 
 ## Runtime design
 
-`HttpTurnAdapter` is the production/default path. It posts to the relative `/v1/turn/text`; Vite proxies `/v1` to `http://127.0.0.1:8000` during development. An optional non-secret base URL may be configured for a deployment that supports cross-origin requests.
+`HttpTurnClient` is the production/default path. It posts to relative `/api/v1/turn/text`; Vite strips the `/api` prefix and proxies to `http://127.0.0.1:8000/v1/turn/text` during development. An optional non-secret base URL may be configured for a deployment that supports cross-origin requests.
 
 The adapter validates every success payload with Zod. Network, HTTP, and invalid-payload failures reject the turn. There is no automatic fixture fallback. Controlled responses exist only in unit/component tests and Playwright route interception.
 
-The conversation controller creates one session ID on mount, appends an immutable pending turn, and attaches the matching response or error to that turn's local ID. Only one request is active at a time in this slice, preventing duplicate submits and ambiguous response pairing.
+The conversation controller creates one session ID on mount, appends an immutable pending turn, and attaches the matching response or error to that turn's local ID. Only one request is active at a time, preventing duplicate submits and ambiguous response pairing. A 60-second client deadline and manual cancellation stop browser waiting without claiming server cancellation; a mismatched response session and late responses are rejected.
 
 ## UI design
 
@@ -56,7 +56,7 @@ The design deliberately avoids a dark neon console, excessive cards, gradients, 
 
 ## Trace behavior
 
-Each successful turn owns its transcript and trace. The supervisor surface shows:
+Each successful turn owns its transcript and trace. The newest turn is selected automatically, and every older trace remains reachable through an explicit per-turn control. A pending or failed turn never borrows the last successful trace. The supervisor surface shows:
 
 - transcript and language, including `unknown`;
 - every scenario with confidence and reason;

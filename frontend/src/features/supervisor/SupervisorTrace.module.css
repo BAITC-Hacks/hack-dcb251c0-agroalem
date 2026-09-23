@@ -1,11 +1,10 @@
 .panel {
-  min-height: 100%;
-  padding: 28px;
-  border: 1px solid #26303b;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(82, 118, 255, 0.11), transparent 38%),
-    #111820;
+  min-width: 0;
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  box-shadow: 0 0.75rem 2rem rgb(23 63 53 / 6%);
 }
 
 .header,
@@ -13,96 +12,185 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .header h2,
 .panel h2 {
-  margin: 4px 0 0;
-  font-size: 22px;
+  margin: 0.3rem 0 0;
+  color: var(--pine);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  text-wrap: balance;
 }
 
 .eyebrow,
 .label {
-  color: #82a0ff;
-  font-size: 11px;
+  color: var(--harvest-text);
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
 .language {
-  padding: 6px 10px;
-  border: 1px solid #344258;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--line);
   border-radius: 999px;
-  color: #c9d4e6;
-  font-size: 12px;
+  background: var(--pine-soft);
+  color: var(--pine);
+  font-family: Consolas, monospace;
+  font-size: 0.75rem;
 }
 
 .block {
-  margin-top: 24px;
+  min-width: 0;
+  margin-top: 1.25rem;
 }
 
 .block p {
-  margin: 8px 0 0;
-  line-height: 1.55;
+  margin: 0.45rem 0 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
 }
 
 .muted {
-  color: #8f9aaa;
+  color: var(--muted);
 }
 
 .list {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
 }
 
 .scenario {
-  padding: 14px;
-  border: 1px solid #293646;
-  border-radius: 14px;
-  background: #0d131a;
+  min-width: 0;
+  padding: 0.8rem;
+  border-left: 0.25rem solid var(--harvest);
+  border-radius: 0 0.7rem 0.7rem 0;
+  background: #f6f1e5;
 }
 
 .scenario p {
-  color: #aeb9c8;
-  font-size: 13px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.scenarioTop strong {
+  color: var(--pine);
+  font-family: Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.scenarioTop span {
+  font-variant-numeric: tabular-nums;
 }
 
 .flags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 20px;
+  gap: 0.45rem;
+  margin-top: 1rem;
 }
 
 .flags span {
-  padding: 7px 9px;
-  border-radius: 9px;
-  background: #18212b;
-  color: #aeb9c8;
-  font-size: 12px;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.5rem;
+  background: var(--pine-soft);
+  color: var(--pine);
+  font-size: 0.75rem;
+}
+
+.confirmation {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.8rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(232 120 50 / 50%);
+  border-radius: 0.65rem;
+  background: #fff2e7;
+}
+
+.confirmation strong {
+  color: #7c3516;
+}
+
+.confirmation span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.keyValues {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+}
+
+.keyValues div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed var(--line);
+}
+
+.keyValues dt,
+.keyValues dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.keyValues dt {
+  color: var(--muted);
+  font-family: Consolas, monospace;
+  font-size: 0.76rem;
+}
+
+.keyValues dd {
+  color: var(--graphite);
+  font-size: 0.82rem;
+}
+
+.actions {
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
 }
 
 .latencyGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
+  gap: 0.45rem;
+  margin-top: 0.6rem;
 }
 
 .metric {
   display: flex;
+  min-width: 0;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  background: #0d131a;
-  color: #9aa7b8;
-  font-size: 12px;
+  gap: 0.5rem;
+  padding: 0.55rem;
+  border-radius: 0.55rem;
+  background: #eef3ef;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .metric strong {
-  color: #f1f5fb;
+  color: var(--graphite);
+  font-family: Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 24rem) {
+  .panel {
+    padding: 1rem;
+  }
+
+  .latencyGrid {
+    grid-template-columns: 1fr;
+  }
 }
