@@ -1,45 +1,35 @@
 # Project truth
 
-Status: coordination bootstrap. This file is the shared truth layer and must be corrected when repository evidence proves it wrong.
+## Objective and ownership
 
-## Source priority
-1. Current committed code.
-2. Starter-kit/source files supplied for the hackathon.
-3. Official task specification.
-4. Committed team decisions in this repository.
-5. Engineering inference, explicitly marked as inference.
+Voice Router: LLM-based routing of the official synthetic Saqta Insurance scenarios, contextual RU/KK/mixed-language interaction and observable trace. Tim owns backend, API, provider integrations and final integration. Danil currently owns reference-driven UI design/layout and React controls. Do not replace his visual work with a second redesign.
 
-Chat memory is not evidence.
+The latest explicit user decision is OpenAI-only for routing, answer generation, STT and TTS. NVIDIA/provider assumptions in historical frontend notes are superseded by this decision.
 
-## Project objective
-Build a Voice Router web application where an LLM selects and continues business scenarios, exposes traceability after each turn, supports Russian/Kazakh including mixed speech, handles uncertainty/handoff, and requires confirmation before irreversible actions.
+## Source facts
 
-## Verified/planned facts from the two-computer specification
-- 40 business scenarios.
-- 3 system intents: `SYS_OUT_OF_SCOPE`, `SYS_UNCLEAR`, `SYS_GOODBYE`.
-- 104 development utterances.
-- Scenario metadata includes `description`, `not_this_if`, examples, priority, slots, confirmation and handoff information.
-- A classic hard-coded intent classifier must not become the decision layer.
-- Test-utterance hardcoding and opaque black-box routing are prohibited.
+The official starter kit defines 40 business scenarios and SYS_OUT_OF_SCOPE, SYS_UNCLEAR, SYS_GOODBYE, plus the 104-item development set. Preserve its IDs, exclusions, labels and synthetic data. Dataset-relative dates use its 2026-10-01 snapshot, not the real wall clock.
 
-These facts came from Tim's two-computer specification and must be reconciled against the actual starter kit during Phase 0. Repository/source evidence wins on conflict.
+Use current code to establish what is implemented; use the official task and starter kit to establish what is required. A missing implementation does not weaken the task requirements. Claims of success require executed evidence.
 
-## Routing policy carried from the same specification
-- confidence >= 0.75: run selected scenario.
-- confidence 0.45 to < 0.75: `SYS_UNCLEAR`, one short clarification, surface two most likely alternatives.
-- confidence < 0.45 twice in a row: operator handoff.
-- Multi-intent: urgent first; remaining scenarios follow mention order.
-- Continuation should continue active scenario and fill slots rather than blindly full-route every turn.
-- Topic switch pushes active scenario to a stack, handles the new scenario, then returns when appropriate.
+## Current implementation
 
-## Anti-hallucination
-Never invent scenario IDs/domain facts/endpoints/transports/frameworks/providers/latency/test results/success states. Use `UNKNOWN` or `BLOCKED` until verified.
+- FastAPI backend with a built-in functional jury page at /; Node is not required for this page.
+- POST /v1/turn/text: LLM routing plus a separate read-only grounded answer from official knowledge_base.json and session history.
+- OpenAI REST transport through HTTPX; no OpenAI SDK dependency is required by this path.
+- POST /v1/audio/transcriptions, /v1/audio/speech, /v1/turn/audio.
+- One server-only OPENAI_API_KEY. Configurable documented model defaults are in .env.example. The old unverified model default was replaced; quality is NOT yet benchmarked.
+- Existing confidence thresholds retained; no baseline-driven tuning has occurred.
+- Session transactions roll back failed text turns; history has at most ten turns.
+- trace.actions=[] because insurance action execution is not implemented. A confirmation flag is not execution.
+- No actual SMS, policy changes, appointments or operator connection. Do not claim those capabilities.
 
-## Current remote-repository facts at bootstrap
-- Default branch: `main`.
-- Remote history initially contained only one initial README commit.
-- Backend/frontend runtime stacks are currently `UNKNOWN` from remote Git alone.
-- Local dependencies and runnable commands remain `UNKNOWN` until Phase 0 inspects `C:\Users\boostseller\Documents\HACKALEM\VOICE router`.
+## Evidence and limits
 
-## Ownership
-Tim owns backend decisions and final integration. Danil owns frontend implementation. See `docs/TEAM_SPLIT.md`.
+This session executed 46 new backend unit/contract regressions and 16 standalone TypeScript audio-transport checks with explicit fixtures. It did not execute a live OpenAI request or the 104-item routing baseline. Browser navigation to the local server was blocked by the environment's Chromium policy. Full repository pytest and full React pnpm check are separate pending gates.
+
+Do not treat fixture routing, authored tests, a pushed commit, an installed dependency or a mergeable PR as proof of a working live demo.
+
+## Next gate
+
+Run the full test suite on a complete authorized checkout; then live 3-item smoke + 104 predictions + original evaluate.py; record actual results. Test one successful and one failed browser request and microphone permission behavior. Only then integrate the verified milestone and tune routing from measured failures.

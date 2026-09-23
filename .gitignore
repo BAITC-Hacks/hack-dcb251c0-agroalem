@@ -8,3 +8,10 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 .DS_Store
+.venv/
+*.tsbuildinfo
+
+# Local evaluation artifacts; record measured evidence in the role state.
+predictions*.json
+smoke_predictions*.json
+baseline-report*.txt
