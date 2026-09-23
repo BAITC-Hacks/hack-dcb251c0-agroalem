@@ -5,7 +5,7 @@ Branch: `tim/backend`
 
 ## Current objective
 
-Get backend CI to execute, run a live 3-item OpenAI smoke, then produce the first official 104-utterance dev-set evaluation baseline.
+Produce FIRST REAL ROUTING BASELINE. Do not tune before the baseline exists.
 
 ## Last completed engineering work
 
@@ -64,6 +64,22 @@ POST /v1/turn/text
 - API credentials are server-side environment only.
 - Clarification text may come from the router as a short customer-facing question, while reason remains concise operational trace and not chain-of-thought.
 
+## Immediate execution sequence
+
+1. Fix confidence streak bug. ✅
+2. Run pytest locally.
+3. Commit + push.
+4. Run 3 live LLM smoke utterances.
+5. Generate all 104 predictions.
+6. Run official `evaluate.py`.
+7. Record baseline.
+8. Only then tune router/model/prompt.
+
+Nearest-hour success criterion:
+- Tim/backend: `FIRST REAL ROUTING BASELINE`.
+- Danil/frontend: `FIRST REAL TEXT E2E UI`.
+- Integrate only when both text milestones exist.
+
 ## Test/evidence status
 
 Already verified from Danil bootstrap:
@@ -71,9 +87,11 @@ Already verified from Danil bootstrap:
 - `python -m py_compile starter-kit/evaluate.py`.
 
 For current backend target:
-- tests are authored;
-- GitHub PR CI has been configured;
-- CI result must be checked before claiming green;
+- confidence streak bug is fixed: only consecutive `<0.45` turns advance handoff streak; medium/high confidence resets it;
+- isolated regression pytest harness for decision policy passed: `7 passed in 0.07s`;
+- this isolated harness is NOT a substitute for full repository pytest;
+- full repository pytest is still pending on Tim's Windows environment because this execution environment lacks the real OpenAI SDK and cannot install it from the network;
+- GitHub Actions jobs currently receive no runner (`runner_id=0`, zero steps), so they do not constitute a code test result;
 - no live OpenAI request has yet been claimed as successful;
 - no evaluation baseline has yet been measured.
 
@@ -120,9 +138,10 @@ Shared main advanced with backend CI workflow after the previous starter-kit syn
 
 ## Next exact target action
 
-1. Check PR #3 backend CI runner status.
-2. On Tim PC run `py -m pytest backend\\tests -q` if hosted Actions remains unavailable.
+1. On Tim PC run `py -m pytest backend\\tests -q`.
+2. Commit/push only if the local branch has additional unpushed changes; GitHub branch already contains the streak fix.
 3. With server-side credentials run `py -m backend.scripts.generate_predictions --limit 3 --output smoke_predictions.json`.
-4. If smoke is valid, run full `py -m backend.scripts.generate_predictions --output predictions.json`.
-5. Run official `py starter-kit\\evaluate.py predictions.json starter-kit\\dev_utterances.json`.
-6. Record exact model ID, commands, measured baseline and failure pairs here before tuning.
+4. If all 3 live routes are valid, run `py -m backend.scripts.generate_predictions --output predictions.json` for all 104.
+5. Run `py starter-kit\\evaluate.py predictions.json starter-kit\\dev_utterances.json`.
+6. Record exact model ID, commands, primary accuracy, full match, multi-intent recall, language/type breakdown and failure pairs.
+7. Only after that begin tuning.
