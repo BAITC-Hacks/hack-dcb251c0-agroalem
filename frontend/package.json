@@ -10,7 +10,8 @@
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm test && pnpm build"
+    "test:transport": "node --test scripts/transport.check.mjs",
+    "check": "pnpm typecheck && pnpm test && pnpm test:transport && pnpm build"
   },
   "dependencies": {
     "react": "19.3.0",

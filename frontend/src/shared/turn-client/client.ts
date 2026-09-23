@@ -1,68 +1,29 @@
 import { turnResultSchema, type TurnInput, type TurnResult } from "./schema";
+import { postTurnJson, requireMatchingSession, TurnClientError } from "./transport";
+
+export { TurnClientError } from "./transport";
 
 export interface TurnClient {
   submit(input: TurnInput, signal?: AbortSignal): Promise<TurnResult>;
 }
 
-export class TurnClientError extends Error {
-  readonly status: number | null;
-
-  constructor(message: string, status: number | null = null) {
-    super(message);
-    this.name = "TurnClientError";
-    this.status = status;
-  }
-}
-
 export class HttpTurnClient implements TurnClient {
-  constructor(private readonly baseUrl: string = "/api") {}
+  constructor(
+    private readonly baseUrl: string = "/api",
+    private readonly timeoutMs = 60_000,
+  ) {}
 
   async submit(input: TurnInput, signal?: AbortSignal): Promise<TurnResult> {
-    let response: Response;
-    try {
-      response = await fetch(
-        `${this.baseUrl.replace(/\/$/, "")}/v1/turn/text`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(input),
-          signal,
-        },
-      );
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        throw error;
-      }
-      throw new TurnClientError("Не удалось связаться с backend.");
-    }
-
-    if (!response.ok) {
-      let detail = "";
-      try {
-        const body = (await response.json()) as { detail?: unknown };
-        detail = typeof body.detail === "string" ? body.detail : "";
-      } catch {
-        // Keep the stable UI-facing fallback below.
-      }
-
-      const fallback =
-        response.status === 422
-          ? "Проверьте текст запроса."
-          : response.status === 503
-            ? "Маршрутизатор пока не настроен."
-            : response.status === 504
-              ? "Маршрутизатор не ответил вовремя."
-              : "Backend не смог обработать запрос.";
-
-      throw new TurnClientError(detail || fallback, response.status);
-    }
-
-    const json: unknown = await response.json();
+    const json = await postTurnJson(
+      `${this.baseUrl.replace(/\/$/, "")}/v1/turn/text`,
+      input,
+      { signal, timeoutMs: this.timeoutMs },
+    );
     const parsed = turnResultSchema.safeParse(json);
     if (!parsed.success) {
-      throw new TurnClientError("Backend вернул ответ неизвестного формата.");
+      throw new TurnClientError("Backend вернул ответ неизвестного формата.", null, "invalid_contract");
     }
-
+    requireMatchingSession(input.session_id, parsed.data.session_id);
     return parsed.data;
   }
 }
