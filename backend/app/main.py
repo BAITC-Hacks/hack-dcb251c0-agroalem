@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException
 
 from .catalog import load_catalog
 from .decision import apply_decision_policy, build_assistant_text
-from .router import LLMRouter, RouterUnavailable
+from .router import LLMRouter, RouterProviderError, RouterTimeout, RouterUnavailable
 from .schemas import LatencyTrace, TextTurnRequest, TurnResponse, TurnTrace
 from .sessions import SessionStore
 
@@ -15,7 +15,13 @@ sessions = SessionStore()
 
 
 def get_router() -> LLMRouter:
-    return LLMRouter()
+    try:
+        return LLMRouter()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Routing provider is not configured",
+        ) from exc
 
 
 @app.get("/health")
@@ -43,10 +49,10 @@ def text_turn(
             history=state.history,
             active_scenario_id=state.active_scenario_id,
         )
-    except RouterUnavailable as exc:
+    except RouterTimeout as exc:
+        raise HTTPException(status_code=504, detail=str(exc)) from exc
+    except (RouterProviderError, RouterUnavailable) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail="Routing provider error") from exc
 
     policy = apply_decision_policy(routed, state, catalog)
     response_started = perf_counter()
@@ -67,12 +73,6 @@ def text_turn(
         }
     )
 
-    requires_confirmation = policy.requires_confirmation
-    actions: list[str] = []
-    if policy.primary and policy.primary.scenario_id in catalog.scenarios:
-        scenario = catalog.scenarios[policy.primary.scenario_id]
-        actions = list(scenario.get("actions", []))
-
     total_ms = (perf_counter() - total_started) * 1000
     return TurnResponse(
         session_id=request.session_id,
@@ -84,11 +84,11 @@ def text_turn(
             scenarios=routed.scenarios,
             alternatives=routed.alternatives,
             slots=routed.slots,
-            actions=actions,
+            actions=[],
             is_continuation=routed.is_continuation,
             needs_clarification=policy.needs_clarification,
             handoff=policy.handoff,
-            requires_confirmation=requires_confirmation,
+            requires_confirmation=policy.requires_confirmation,
             latency_ms=LatencyTrace(
                 router=router_ms,
                 response=response_ms,
