@@ -100,3 +100,26 @@ After tests and a live API smoke pass:
 2. run official `starter-kit/evaluate.py`;
 3. record real baseline and failure pairs;
 4. iterate router prompt/model only from measured evidence.
+
+
+## Official dev evaluation
+
+First run a small live smoke:
+
+```powershell
+py -m backend.scripts.generate_predictions --limit 3 --output smoke_predictions.json
+```
+
+Then run the full 104-utterance dev set:
+
+```powershell
+py -m backend.scripts.generate_predictions --output predictions.json
+py starter-kit\evaluate.py predictions.json starter-kit\dev_utterances.json
+```
+
+Do not commit `predictions.json` as a benchmark claim until the run command, model ID and measured results are recorded in `.codex/TIM_STATE.md`.
+
+The prediction runner:
+- preserves model-returned multi-intent order;
+- maps uncertain business routes below the 0.75 policy threshold to `SYS_UNCLEAR`;
+- keeps explicit system intents unchanged.
